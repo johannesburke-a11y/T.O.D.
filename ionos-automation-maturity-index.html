@@ -1,0 +1,1209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Automation Maturity Index — IONOS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #0b2a63;
+    --navy-deep: #071b42;
+    --navy-mid: #1a3f7a;
+    --navy-light: #2a5298;
+    --ice: #d2f6fc;
+    --ice-deep: #a8eef8;
+    --sky: #dbedf8;
+    --sky-deep: #b8d8f0;
+    --white: #ffffff;
+    --off-white: #f4f8fd;
+    --text-primary: #0b2a63;
+    --text-secondary: #3a5480;
+    --text-muted: #7a94bc;
+    --border: rgba(11,42,99,0.12);
+    --border-strong: rgba(11,42,99,0.2);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Figtree', sans-serif;
+    background: var(--off-white);
+    color: var(--text-primary);
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  .header {
+    background: var(--navy);
+    padding: 0;
+    position: relative;
+    overflow: visible;
+  }
+  .header::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -80px;
+    width: 320px; height: 320px;
+    border-radius: 50%;
+    background: rgba(210,246,252,0.07);
+    pointer-events: none;
+  }
+  .header::after {
+    content: '';
+    position: absolute;
+    bottom: -40px; left: 30%;
+    width: 200px; height: 200px;
+    border-radius: 50%;
+    background: rgba(219,237,248,0.05);
+    pointer-events: none;
+  }
+  .header-inner {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 2.5rem 2rem 0;
+    position: relative;
+    z-index: 1;
+  }
+  .header-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 2rem;
+  }
+  .brand-line {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .brand-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--ice);
+  }
+  .brand-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    color: rgba(210,246,252,0.6);
+    text-transform: uppercase;
+  }
+  .header h1 {
+    font-size: clamp(26px, 4vw, 36px);
+    font-weight: 900;
+    color: var(--white);
+    letter-spacing: -0.02em;
+    line-height: 1.05;
+  }
+  .header h1 span { color: var(--ice); }
+
+  .score-summary {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .score-big {
+    font-size: 48px;
+    font-weight: 900;
+    color: var(--white);
+    letter-spacing: -0.03em;
+    line-height: 1;
+  }
+  .score-big span { font-size: 22px; color: rgba(255,255,255,0.4); font-weight: 400; }
+  .tier-pill {
+    padding: 6px 16px;
+    border-radius: 100px;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  /* ── Progress bar ── */
+  .progress-section {
+    padding: 0 2rem 2rem;
+    max-width: 860px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+    overflow: visible;
+  }
+  .tier-track {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 3px;
+    margin-bottom: 6px;
+  }
+  .tier-seg {
+    height: 5px;
+    border-radius: 3px;
+    background: rgba(255,255,255,0.15);
+    transition: background 0.4s;
+  }
+  .tier-seg.active { background: var(--ice); }
+  .tier-labels {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 3px;
+  }
+  .tier-lbl {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.3);
+    text-align: center;
+    transition: color 0.3s;
+    position: static;
+    cursor: default;
+    padding-bottom: 4px;
+  }
+  .tier-lbl.active { color: var(--ice); font-weight: 500; }
+  .tier-lbl:hover { color: rgba(255,255,255,0.7); }
+
+  .tier-tooltip-overlay {
+    position: absolute;
+    bottom: -10px;
+    left: 0;
+    width: 100%;
+    pointer-events: none;
+    z-index: 200;
+  }
+  .tier-tooltip {
+    position: absolute;
+    top: 0;
+    width: 200px;
+    background: #071b42;
+    border: 1px solid rgba(210,246,252,0.2);
+    border-radius: 10px;
+    padding: 12px 14px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.18s ease, transform 0.18s ease;
+    transform: translateY(4px);
+    text-align: left;
+    font-family: 'Figtree', sans-serif;
+    box-shadow: 0 12px 32px rgba(7,27,66,0.55);
+  }
+  .tier-tooltip.visible { opacity: 1; transform: translateY(0); }
+  .tier-tooltip::before {
+    content: '';
+    position: absolute;
+    top: -5px;
+    width: 9px; height: 9px;
+    background: #071b42;
+    border-left: 1px solid rgba(210,246,252,0.2);
+    border-top: 1px solid rgba(210,246,252,0.2);
+    transform: rotate(45deg);
+  }
+  .tier-tooltip-name {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--ice);
+    margin-bottom: 3px;
+    letter-spacing: 0.03em;
+  }
+  .tier-tooltip-range {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: rgba(210,246,252,0.4);
+    margin-bottom: 7px;
+    letter-spacing: 0.04em;
+  }
+  .tier-tooltip-desc {
+    font-size: 12.5px;
+    color: rgba(219,237,248,0.8);
+    line-height: 1.6;
+  }
+
+  /* ── Tabs ── */
+  .tabs-bar {
+    background: var(--navy-deep);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  .tabs-inner {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 0 2rem;
+    display: flex;
+    gap: 0;
+  }
+  .tab-btn {
+    padding: 14px 20px;
+    font-family: 'Figtree', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.45);
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    letter-spacing: 0.02em;
+    transition: all 0.2s;
+  }
+  .tab-btn:hover { color: rgba(255,255,255,0.75); }
+  .tab-btn.active { color: var(--ice); border-bottom-color: var(--ice); }
+
+  /* ── Main layout ── */
+  .main {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+
+  /* ── Dimension cards ── */
+  .dim-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 10px;
+    overflow: hidden;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .dim-card:hover { border-color: var(--border-strong); }
+  .dim-card.active { border-color: var(--navy-light); box-shadow: 0 0 0 3px rgba(11,42,99,0.06); }
+
+  .dim-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 18px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .dim-icon {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    background: var(--sky);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+    color: var(--navy);
+  }
+  .dim-meta { flex: 1; min-width: 0; }
+  .dim-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 5px;
+  }
+  .dim-bar-wrap {
+    height: 3px;
+    background: var(--sky);
+    border-radius: 2px;
+  }
+  .dim-bar {
+    height: 3px;
+    border-radius: 2px;
+    background: var(--navy);
+    transition: width 0.4s cubic-bezier(0.4,0,0.2,1);
+  }
+  .dim-score-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--navy);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .dim-chevron {
+    font-size: 10px;
+    color: var(--text-muted);
+    transition: transform 0.2s;
+  }
+  .dim-chevron.open { transform: rotate(180deg); }
+
+  .dim-body {
+    padding: 0 18px 18px;
+    border-top: 1px solid var(--border);
+    display: none;
+  }
+  .dim-body.open { display: block; }
+  .dim-desc {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    padding: 12px 0 14px;
+  }
+  .level-grid { display: flex; flex-direction: column; gap: 6px; }
+  .level-btn {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 12px;
+    background: var(--off-white);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.15s;
+    font-family: 'Figtree', sans-serif;
+  }
+  .level-btn:hover { border-color: var(--border-strong); background: var(--sky); }
+  .level-btn.selected {
+    background: var(--navy);
+    border-color: var(--navy);
+  }
+  .level-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-muted);
+    min-width: 16px;
+    margin-top: 2px;
+    flex-shrink: 0;
+  }
+  .level-btn.selected .level-num { color: var(--ice); }
+  .level-text {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+  }
+  .level-btn.selected .level-text { color: var(--white); font-weight: 500; }
+
+  /* ── Save / Reset buttons ── */
+  .save-btn {
+    width: 100%;
+    margin-top: 10px;
+    padding: 14px;
+    background: var(--navy);
+    color: var(--ice);
+    border: none;
+    border-radius: 10px;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .save-btn:hover { background: var(--navy-mid); }
+  .save-btn.saved { background: #1a7a4a; color: #a8f0cc; }
+
+  .btn-row { display: flex; gap: 8px; margin-top: 10px; }
+  .btn-row .save-btn { flex: 1; margin-top: 0; }
+  .reset-btn {
+    padding: 14px 18px;
+    background: transparent;
+    color: var(--text-muted);
+    border: 1px solid var(--border-strong);
+    border-radius: 10px;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .reset-btn:hover { border-color: #c0392b; color: #c0392b; background: rgba(192,57,43,0.05); }
+  .reset-btn.confirming { border-color: #c0392b; color: #fff; background: #c0392b; }
+
+  .confirm-bar {
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 8px;
+    padding: 10px 14px;
+    background: rgba(192,57,43,0.06);
+    border: 1px solid rgba(192,57,43,0.2);
+    border-radius: 8px;
+  }
+  .confirm-bar.visible { display: flex; }
+  .confirm-msg { font-size: 13px; color: #a93226; }
+  .confirm-actions { display: flex; gap: 6px; flex-shrink: 0; }
+  .confirm-yes {
+    padding: 6px 14px;
+    background: #c0392b; color: #fff;
+    border: none; border-radius: 6px;
+    font-family: 'DM Mono', monospace; font-size: 11px;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    cursor: pointer; font-weight: 500;
+  }
+  .confirm-no {
+    padding: 6px 14px;
+    background: transparent; color: var(--text-muted);
+    border: 1px solid var(--border-strong); border-radius: 6px;
+    font-family: 'DM Mono', monospace; font-size: 11px;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    cursor: pointer;
+  }
+
+  /* ── Overview tab ── */
+  /* ── Tier context block ── */
+  .tier-context {
+    border-radius: 12px;
+    padding: 1.4rem 1.5rem;
+    margin-bottom: 1rem;
+    border: 1px solid rgba(11,42,99,0.15);
+    background: var(--navy);
+  }
+  .tier-context-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .tier-context-badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: 100px;
+    font-weight: 500;
+  }
+  .tier-context-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--white);
+  }
+  .tier-context-desc {
+    font-size: 14px;
+    color: rgba(219,237,248,0.8);
+    line-height: 1.7;
+    margin-bottom: 12px;
+  }
+  .tier-context-signals {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .tier-signal {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 13px;
+    color: rgba(210,246,252,0.7);
+    line-height: 1.5;
+  }
+  .tier-signal-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--ice);
+    margin-top: 6px;
+    flex-shrink: 0;
+  }
+  .tier-next {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    font-size: 13px;
+    color: rgba(210,246,252,0.55);
+  }
+  .tier-next strong { color: var(--ice); font-weight: 600; }
+
+  /* ── Expanded level cards ── */
+  .levels-list li { flex-direction: column; align-items: stretch; gap: 0; padding: 14px 0; }
+  .level-row-top { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+  .level-meaning {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.65;
+    margin-bottom: 6px;
+  }
+  .level-next-wrap {
+    display: flex;
+    align-items: flex-start;
+    gap: 7px;
+    padding: 8px 10px;
+    background: var(--sky);
+    border-radius: 7px;
+    font-size: 12px;
+    color: var(--navy-light);
+    line-height: 1.55;
+  }
+  .level-next-arrow { font-size: 11px; margin-top: 1px; flex-shrink: 0; color: var(--navy); }
+
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 10px;
+    margin-bottom: 1.5rem;
+  }
+  .metric-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.1rem 1.25rem;
+  }
+  .metric-card.accent {
+    background: var(--navy);
+    border-color: var(--navy);
+  }
+  .metric-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+  }
+  .metric-card.accent .metric-label { color: rgba(210,246,252,0.55); }
+  .metric-value {
+    font-size: 28px;
+    font-weight: 900;
+    color: var(--navy);
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+  .metric-card.accent .metric-value { color: var(--ice); }
+  .metric-sub {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 3px;
+  }
+  .metric-card.accent .metric-sub { color: rgba(210,246,252,0.45); }
+
+  .breakdown-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+  }
+  .breakdown-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+  }
+  .radar-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+  .radar-label {
+    font-size: 13px;
+    color: var(--text-secondary);
+    width: 160px;
+    flex-shrink: 0;
+  }
+  .radar-track {
+    flex: 1;
+    height: 5px;
+    background: var(--sky);
+    border-radius: 3px;
+  }
+  .radar-fill {
+    height: 5px;
+    border-radius: 3px;
+    background: var(--navy);
+    transition: width 0.5s cubic-bezier(0.4,0,0.2,1);
+  }
+  .radar-score {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--navy);
+    width: 28px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  .levels-list { list-style: none; }
+  .levels-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .levels-list li:last-child { border-bottom: none; }
+  .levels-badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--white);
+    background: var(--navy);
+    padding: 2px 8px;
+    border-radius: 4px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .levels-name { font-size: 13px; font-weight: 600; color: var(--navy); margin-bottom: 2px; }
+  .levels-desc { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+
+  /* ── History tab ── */
+  .empty-state {
+    text-align: center;
+    padding: 4rem 1rem;
+    color: var(--text-muted);
+  }
+  .empty-icon { font-size: 40px; margin-bottom: 12px; color: var(--sky-deep); }
+  .empty-title { font-size: 15px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; }
+  .empty-sub { font-size: 13px; }
+
+  .history-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.1rem 1.25rem;
+    margin-bottom: 10px;
+  }
+  .history-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+  .history-date { font-size: 14px; font-weight: 700; color: var(--navy); }
+  .history-pts { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  .history-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+  }
+  .history-dim {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 4px;
+  }
+  .history-dim-name { font-size: 11px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .history-dim-score { font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 500; color: var(--navy); flex-shrink: 0; }
+
+  /* ── Footer ── */
+  .footer {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 1rem 2rem 2.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid var(--border);
+  }
+  .footer-brand {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+  .save-status {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+  }
+
+  @media (max-width: 600px) {
+    .header-inner, .progress-section, .main, .tabs-inner, .footer { padding-left: 1rem; padding-right: 1rem; }
+    .radar-label { width: 110px; }
+    .history-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-inner">
+    <div class="header-top">
+      <div>
+        <div class="brand-line">
+          <div class="brand-dot"></div>
+          <span class="brand-label">Diebold Scale (T.O.D.)</span>
+        </div>
+        <h1>Automation Maturity <span>Index</span></h1>
+      </div>
+      <div class="score-summary">
+        <div>
+          <div class="score-big" id="hdr-score">—<span>/30</span></div>
+        </div>
+        <div id="hdr-tier-pill" class="tier-pill" style="background:rgba(210,246,252,0.12);color:var(--ice);">—</div>
+      </div>
+    </div>
+  </div>
+  <div class="progress-section">
+    <div class="tier-track" id="tier-track">
+      <div class="tier-seg" data-tier="0"></div>
+      <div class="tier-seg" data-tier="1"></div>
+      <div class="tier-seg" data-tier="2"></div>
+      <div class="tier-seg" data-tier="3"></div>
+      <div class="tier-seg" data-tier="4"></div>
+    </div>
+    <div class="tier-labels" id="tier-labels">
+      <div class="tier-lbl" data-tier="0">Manual</div>
+      <div class="tier-lbl" data-tier="1">Assisted</div>
+      <div class="tier-lbl" data-tier="2">Partial</div>
+      <div class="tier-lbl" data-tier="3">Advanced</div>
+      <div class="tier-lbl" data-tier="4">Autonomous</div>
+    </div>
+    <div class="tier-tooltip-overlay" id="tier-tooltip-overlay">
+      <div class="tier-tooltip" id="tier-tooltip">
+        <div class="tier-tooltip-name" id="tt-name"></div>
+        <div class="tier-tooltip-range" id="tt-range"></div>
+        <div class="tier-tooltip-desc" id="tt-desc"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tabs-bar">
+  <div class="tabs-inner">
+    <button class="tab-btn active" onclick="switchTab('assess', this)">Assessment</button>
+    <button class="tab-btn" onclick="switchTab('overview', this)">Overview</button>
+    <button class="tab-btn" onclick="switchTab('history', this)">History</button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- ASSESS TAB -->
+  <div id="tab-assess">
+    <div id="dims-container"></div>
+    <div class="btn-row">
+      <button class="save-btn" id="save-btn" onclick="saveScores()">Save Results</button>
+      <button class="reset-btn" id="reset-btn" onclick="promptReset()">Reset</button>
+    </div>
+    <div class="confirm-bar" id="confirm-bar">
+      <span class="confirm-msg">This will clear all scores and saved history. Are you sure?</span>
+      <div class="confirm-actions">
+        <button class="confirm-no" onclick="cancelReset()">Cancel</button>
+        <button class="confirm-yes" onclick="confirmReset()">Yes, reset</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- OVERVIEW TAB -->
+  <div id="tab-overview" style="display:none">
+    <div class="metrics-grid" id="ov-metrics"></div>
+    <div id="ov-tier-context"></div>
+    <div class="breakdown-card">
+      <div class="breakdown-title">Dimension Breakdown</div>
+      <div id="ov-bars"></div>
+    </div>
+    <div class="breakdown-card">
+      <div class="breakdown-title">Current Levels &amp; What They Mean</div>
+      <ul class="levels-list" id="ov-levels"></ul>
+    </div>
+  </div>
+
+  <!-- HISTORY TAB -->
+  <div id="tab-history" style="display:none">
+    <div id="history-container"></div>
+  </div>
+
+</div>
+
+<div class="footer">
+  <span class="footer-brand">Automation Maturity Index · IONOS</span>
+  <span class="save-status" id="save-status">No unsaved changes</span>
+</div>
+
+<script>
+const ICONS = {
+  process:    `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M17.5 14v6M14 17h7"/></svg>`,
+  tooling:    `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>`,
+  integration:`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>`,
+  workforce:  `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
+  monitoring: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>`,
+  governance: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>`,
+};
+
+const DIMS = [
+  { id:"process",     title:"Process Automation",      desc:"To what degree are your core business processes automated end-to-end?",
+    levels:["All processes are fully manual; no automation exists","Basic task automation in isolated areas (e.g. macros, scripts)","Key processes partially automated; significant manual handoffs remain","Most core processes automated with minimal human intervention","End-to-end automation across all business processes; humans handle exceptions only"] },
+  { id:"tooling",     title:"Tools & Technology",      desc:"How mature and integrated is your automation technology stack?",
+    levels:["No dedicated automation tooling; work done in generic software","Ad-hoc tools (spreadsheets, basic scripts) used inconsistently","RPA or workflow tools deployed in specific departments","Unified automation platform across departments with API-driven integrations","Intelligent automation stack with AI/ML, RPA, and orchestration fully integrated"] },
+  { id:"integration", title:"Systems Integration",     desc:"How well do your systems communicate and share data without manual intervention?",
+    levels:["Systems are siloed; data moved manually between platforms","Some point-to-point integrations exist but are fragile and undocumented","Core systems integrated via middleware or iPaaS; some gaps remain","Near-complete integration landscape with real-time data flows","Fully integrated ecosystem; event-driven architecture with no manual data transfer"] },
+  { id:"workforce",   title:"Workforce Enablement",    desc:"Are your people equipped and empowered to work alongside automation?",
+    levels:["No training or change management; automation seen as a threat","Awareness programs exist but adoption is low and uneven","Formal upskilling underway; automation champions in key teams","Automation fluency widespread; employees redesign their own workflows","Human-automation collaboration is the default; continuous learning embedded in culture"] },
+  { id:"monitoring",  title:"Monitoring & Reliability", desc:"How well do you track, measure, and maintain your automated systems?",
+    levels:["No monitoring; failures discovered when users complain","Basic logging exists; incidents handled reactively","Dashboards and alerting in place for critical automations","Proactive monitoring with SLAs, anomaly detection, and automated recovery","Full observability across all automations; self-healing systems with predictive maintenance"] },
+  { id:"governance",  title:"Governance & Control",    desc:"Do you have policies, oversight, and accountability for your automation estate?",
+    levels:["No policies or inventory of automated systems","Informal guidelines; no central ownership or audit trail","Automation policy exists; central registry maintained","Formal governance board; change management and risk assessments enforced","Continuous compliance monitoring; automation lifecycle fully governed from build to retirement"] },
+];
+
+const TIERS = [
+  { min:0,  max:9,  label:"Manual",     bg:"rgba(210,246,252,0.12)", color:"#d2f6fc" },
+  { min:10, max:14, label:"Assisted",   bg:"rgba(219,237,248,0.2)",  color:"#dbedf8" },
+  { min:15, max:19, label:"Partial",    bg:"rgba(219,237,248,0.2)",  color:"#9dc8e8" },
+  { min:20, max:24, label:"Advanced",   bg:"rgba(210,246,252,0.25)", color:"#58d8f0" },
+  { min:25, max:30, label:"Autonomous", bg:"rgba(210,246,252,0.35)", color:"#d2f6fc" },
+];
+
+const STORAGE_KEY = "ionos_automation_maturity_v1";
+
+let scores = { process:1, tooling:1, integration:1, workforce:1, monitoring:1, governance:1 };
+let history = [];
+let expanded = null;
+let unsaved = false;
+
+function load() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const d = JSON.parse(raw);
+      if (d.scores) scores = d.scores;
+      if (d.history) history = d.history;
+    }
+  } catch(e) {}
+}
+
+function getTier(total) {
+  return TIERS.find(t => total >= t.min && total <= t.max) || TIERS[0];
+}
+function getTierIndex(total) {
+  return TIERS.findIndex(t => total >= t.min && total <= t.max);
+}
+function total() { return Object.values(scores).reduce((a,b)=>a+b,0); }
+
+function updateHeader() {
+  const t = total();
+  const tier = getTier(t);
+  const ti = getTierIndex(t);
+  document.getElementById("hdr-score").innerHTML = t + '<span>/30</span>';
+  const pill = document.getElementById("hdr-tier-pill");
+  pill.textContent = tier.label;
+  pill.style.background = tier.bg;
+  pill.style.color = tier.color;
+  document.querySelectorAll(".tier-seg").forEach((el, i) => {
+    el.classList.toggle("active", i <= ti);
+  });
+  document.querySelectorAll(".tier-lbl").forEach((el, i) => {
+    el.classList.toggle("active", i === ti);
+  });
+}
+
+function renderDims() {
+  const c = document.getElementById("dims-container");
+  c.innerHTML = DIMS.map(d => {
+    const s = scores[d.id];
+    const pct = (s/5)*100;
+    const isOpen = expanded === d.id;
+    return `<div class="dim-card ${isOpen?'active':''}" id="card-${d.id}">
+      <div class="dim-header" onclick="toggleDim('${d.id}')">
+        <div class="dim-icon">${ICONS[d.id]}</div>
+        <div class="dim-meta">
+          <div class="dim-title">${d.title}</div>
+          <div class="dim-bar-wrap"><div class="dim-bar" id="bar-${d.id}" style="width:${pct}%"></div></div>
+        </div>
+        <div class="dim-score-label">
+          <span id="score-lbl-${d.id}">${s}/5</span>
+          <span class="dim-chevron ${isOpen?'open':''}" id="chev-${d.id}">▼</span>
+        </div>
+      </div>
+      <div class="dim-body ${isOpen?'open':''}" id="body-${d.id}">
+        <div class="dim-desc">${d.desc}</div>
+        <div class="level-grid">
+          ${d.levels.map((l,i) => `<button class="level-btn ${s===i+1?'selected':''}" id="lvl-${d.id}-${i+1}" onclick="setScore('${d.id}',${i+1})">
+            <span class="level-num">${i+1}</span>
+            <span class="level-text">${l}</span>
+          </button>`).join('')}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleDim(id) {
+  expanded = expanded === id ? null : id;
+  renderDims();
+}
+
+function setScore(id, val) {
+  scores[id] = val;
+  unsaved = true;
+  document.getElementById("save-status").textContent = "Unsaved changes";
+  const pct = (val/5)*100;
+  const bar = document.getElementById("bar-"+id);
+  if (bar) bar.style.width = pct+"%";
+  const lbl = document.getElementById("score-lbl-"+id);
+  if (lbl) lbl.textContent = val+"/5";
+  DIMS.find(d=>d.id===id).levels.forEach((_,i) => {
+    const btn = document.getElementById("lvl-"+id+"-"+(i+1));
+    if (btn) btn.classList.toggle("selected", i+1 === val);
+  });
+  updateHeader();
+  if (document.getElementById("tab-overview").style.display !== "none") renderOverview();
+}
+
+function saveScores() {
+  const entry = {
+    date: new Date().toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"}),
+    scores: {...scores},
+    total: total()
+  };
+  history = [entry, ...history].slice(0, 12);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({scores, history}));
+  unsaved = false;
+  const btn = document.getElementById("save-btn");
+  btn.textContent = "✓ Saved";
+  btn.classList.add("saved");
+  document.getElementById("save-status").textContent = "Results saved";
+  setTimeout(() => { btn.textContent = "Save Results"; btn.classList.remove("saved"); }, 2200);
+}
+
+function promptReset() {
+  document.getElementById("confirm-bar").classList.add("visible");
+  document.getElementById("reset-btn").classList.add("confirming");
+}
+function cancelReset() {
+  document.getElementById("confirm-bar").classList.remove("visible");
+  document.getElementById("reset-btn").classList.remove("confirming");
+}
+function confirmReset() {
+  scores = { process:1, tooling:1, integration:1, workforce:1, monitoring:1, governance:1 };
+  history = [];
+  localStorage.removeItem(STORAGE_KEY);
+  expanded = null;
+  unsaved = false;
+  cancelReset();
+  renderDims();
+  updateHeader();
+  document.getElementById("save-status").textContent = "Reset — no saved data";
+}
+
+const TIER_DETAILS = {
+  "Manual": {
+    desc: "Automation is not yet a meaningful part of how your organization operates. Work is done by people, in sequences that haven't been examined for efficiency. There is no shared tooling, no strategy, and no appetite to change. The cost is invisible — it accumulates in headcount, errors, and lost speed rather than appearing on a balance sheet.",
+    signals: ["No automation budget or ownership assigned","Core processes require manual data entry and handoffs","Teams use spreadsheets and email as primary workflow tools","Automation is discussed but never prioritized"],
+    next: "Map your highest-volume, most repetitive process. Calculate the hours spent on it monthly. That number is your business case for automation — take it to leadership with a pilot proposal."
+  },
+  "Assisted": {
+    desc: "Some automation exists, but it's fragmented and inconsistent. Individual teams have found their own solutions — scripts, macros, basic tools — without coordination or shared standards. The organization saves time in pockets but doesn't compound those gains because there's no common platform or strategy.",
+    signals: ["RPA or automation tools used in 1–2 departments only","No central inventory of what's automated","Automations built by individuals, not teams — single points of failure","No formal process to identify or prioritize automation opportunities"],
+    next: "Conduct an automation audit: catalogue every automation currently in use across the organization. Identify which ones could be standardized, scaled, or consolidated onto a single platform."
+  },
+  "Partial": {
+    desc: "You have real automation in production and a team capable of building more. The challenge is that automation is still project-by-project — islands of efficiency that don't connect. Significant manual handoffs remain between automated steps, and the organization hasn't fundamentally changed how it thinks about work.",
+    signals: ["Core processes partially automated in 3–4 departments","Automation platform exists but adoption is uneven","Handoffs between automated and manual steps are friction points","No systematic approach to measuring automation ROI"],
+    next: "Pick two automated processes and connect them. Eliminate the manual handoff in between. This is the step from isolated automation to integrated automation — it's where compounding begins."
+  },
+  "Advanced": {
+    desc: "Automation is embedded across the organization and delivering measurable business value. You have a platform, a team, governance, and a pipeline of opportunities. The gap is depth: you're scaling breadth faster than you're optimizing the automations already running, and intelligent automation (AI-driven decisions within workflows) is still limited.",
+    signals: ["Automation covers most core business processes","Unified platform with central monitoring and governance","Business teams can request and prioritize automation independently","ROI is tracked and reported at a portfolio level"],
+    next: "Introduce intelligence into your highest-value automations. Where decisions are currently hardcoded rules, replace them with ML models. This is the transition from task automation to intelligent process automation."
+  },
+  "Autonomous": {
+    desc: "Your organization operates with minimal human intervention in routine processes. Automation handles end-to-end workflows, systems self-heal when they fail, and people focus on judgment, creativity, and exceptions. You are among a small group of organizations where automation is a genuine structural competitive advantage — it's not just faster, it's qualitatively different.",
+    signals: ["End-to-end automation across all core business functions","Self-healing automations with predictive failure detection","Humans operate as exception handlers and strategic decision-makers","Automation estate is continuously optimized without manual intervention"],
+    next: "Extend autonomous operations into your customer-facing and partner-facing processes. The next frontier is autonomous systems that adapt to external changes — market shifts, regulatory updates, customer behavior — without human re-programming."
+  }
+};
+
+const DIM_MEANINGS = {
+  process: [
+    { meaning: "Every step of your core processes requires a human. Data is entered by hand, decisions are made individually, and work moves through email and meetings. There is no baseline from which to improve because nothing is measured.", next: "Document one process end-to-end. Count the steps, the people involved, and the time taken. Make it visible — unmeasured processes can't be automated." },
+    { meaning: "Some repetitive tasks have been automated — usually by an individual who wrote a script or built a macro. These automations are helpful but undocumented, fragile, and unknown to the rest of the organization.", next: "Identify the three most time-consuming manual steps in your highest-volume process. Automate just those steps using your existing tooling. Don't boil the ocean." },
+    { meaning: "Core processes are partially automated, but significant manual work remains — particularly at handoff points between systems or teams. The process is faster than it was, but it still requires human coordination to keep running.", next: "Map every manual handoff in your most automated process. Each one is a gap. Close the highest-volume gap first using integration or workflow orchestration." },
+    { meaning: "Most of your core processes run with minimal human involvement. Humans set up, monitor, and handle exceptions — they don't operate the process itself. Automation has changed how work gets done, not just how fast.", next: "Identify the remaining manual touchpoints. For each one, ask: is this manual because it requires judgment, or because it hasn't been automated yet? The latter are your next targets." },
+    { meaning: "Processes run end-to-end without human intervention. Exceptions are routed automatically to the right person with the right context. The organization doesn't run processes — it monitors and improves them.", next: "Focus shifts to optimization: continuously measure process performance, identify drift, and improve automations using real operational data. Consider AI-driven process mining for continuous discovery." }
+  ],
+  tooling: [
+    { meaning: "Work is done in generic software — email, spreadsheets, shared drives. There are no tools designed for automation, and the concept hasn't been operationalized. Every efficiency gain requires a person.", next: "Evaluate one automation platform. RPA tools like UiPath or Power Automate are good starting points. Run a free trial on one process to demonstrate feasibility." },
+    { meaning: "Ad-hoc tools are in use — scripts, macros, maybe a simple automation tool — but inconsistently and without coordination. Different teams use different approaches, creating a fragmented tooling landscape that's hard to maintain or scale.", next: "Standardize on one automation tool across the organization. Consolidate existing automations onto that platform. Fragmented tooling is more expensive to maintain than a single platform." },
+    { meaning: "A proper automation platform (RPA, workflow engine, or iPaaS) is deployed in specific departments. It works, but adoption is patchy and the platform isn't yet connected to the rest of the organization's systems.", next: "Extend the platform horizontally: onboard two new departments. Then focus on API connectivity — the more systems your platform can talk to, the more processes it can automate." },
+    { meaning: "A unified automation platform operates across departments, connected to core systems via APIs. The tooling is solid and the team knows how to use it. The next layer is intelligence: adding AI-driven decision-making to automated workflows.", next: "Layer AI onto your most rules-heavy automations. Start with document processing, classification, or anomaly detection — tasks where rules are complex and ML outperforms hardcoded logic." },
+    { meaning: "The automation stack is fully integrated — RPA, workflow orchestration, AI/ML, and analytics work together. The platform can handle simple task automation and complex intelligent decision-making within the same workflow.", next: "Invest in keeping the stack current. Automation technology evolves fast — establish a quarterly review cycle to assess new capabilities and retire legacy components." }
+  ],
+  integration: [
+    { meaning: "Each system is an island. Moving data between them requires a person to copy, paste, reformat, and re-enter. Every manual transfer is a delay, an error opportunity, and a cost that's invisible because it's just 'how things work'.", next: "Identify your two most frequently used systems that don't talk to each other. Check if both have APIs. If so, a simple integration is likely achievable in days, not months." },
+    { meaning: "Some systems are connected, but integrations were built point-to-point, are undocumented, and tend to break silently. The organization has gained some speed but lives in fear of integration failures it can't diagnose quickly.", next: "Document every existing integration: what it connects, what data it moves, and who owns it. Then audit for fragility — which ones would break the business if they failed tonight?" },
+    { meaning: "Core systems are integrated via middleware or an iPaaS platform. Data flows reliably between the most important systems. Gaps remain — usually older systems, legacy databases, or recently acquired tools that haven't been connected yet.", next: "Close the gaps systematically. Prioritize by data volume and business criticality. Consider an API gateway to standardize how systems expose and consume data." },
+    { meaning: "The integration landscape is near-complete. Data flows in real time between systems, and the organization operates from a single source of truth for most business data. New systems are integrated as part of their onboarding, not as a follow-up project.", next: "Move toward event-driven architecture. Rather than scheduled data syncs, systems should react to events in real time. This enables faster automation and eliminates the lag that batched integrations introduce." },
+    { meaning: "The integration estate is a strategic asset. Data moves in real time, systems communicate via events, and there are no manual data transfers in core business operations. New capabilities can be connected and live in hours, not weeks.", next: "Focus on data quality and lineage. At full integration maturity, the risk shifts from connectivity to data integrity — ensuring that what flows between systems is accurate, consistent, and auditable." }
+  ],
+  workforce: [
+    { meaning: "Automation is seen as a threat, a luxury, or simply not relevant to most employees' work. There is no training, no change management, and no internal advocates. Any automation initiative will face cultural resistance before it faces technical challenges.", next: "Start with storytelling, not technology. Find one example of automation saving significant time and share it widely. Make automation feel real and beneficial before asking anyone to change how they work." },
+    { meaning: "Awareness exists — people know automation is happening — but adoption is low and uneven. Some employees are enthusiastic; most are passive or skeptical. Training is ad-hoc, and there are no formal mechanisms to turn enthusiasm into capability.", next: "Identify your automation champions — the people already experimenting — and give them a formal role. Create a community of practice. Peer learning is more effective than top-down training." },
+    { meaning: "Formal upskilling programs are running and automation champions are embedded in key teams. Employees in those teams have changed how they work. Beyond those teams, however, the picture is uneven — most of the organization hasn't yet experienced automation firsthand.", next: "Run a structured automation hackathon: give cross-functional teams two days to automate something in their own workflow. Direct experience builds fluency faster than any training program." },
+    { meaning: "Automation fluency is widespread. Most employees understand what can and can't be automated, can commission automation work, and some can build simple automations themselves. The culture has shifted from 'we do things manually' to 'we automate where we can'.", next: "Move from fluency to ownership. The goal is employees who proactively identify and drive automation improvements in their own domains — without waiting for a central team to do it for them." },
+    { meaning: "Human-automation collaboration is the default operating model. Employees work alongside automated systems, handle exceptions, and continuously improve the automations in their area. Learning is embedded in how work is done, not delivered as a separate training program.", next: "Invest in advanced capability-building: process mining, intelligent automation design, and AI literacy. As automation becomes more intelligent, the human skills required to oversee it must keep pace." }
+  ],
+  monitoring: [
+    { meaning: "Automated systems run unobserved. When something fails, it's discovered when a downstream user notices an error or a process stops producing output. There is no early warning, no audit trail, and no way to distinguish a slow failure from a functioning system.", next: "Add basic logging to every automation in production today. A timestamp, a status, and an error message is the minimum. You cannot improve what you cannot see." },
+    { meaning: "Basic logging exists and some incidents are caught before users notice, but monitoring is reactive and inconsistent. Alerts exist for some automations but not others, and the team spends significant time investigating issues that better monitoring would have caught earlier.", next: "Define SLAs for your most critical automations. What is the acceptable failure rate? The maximum acceptable downtime? Set automated alerts when those thresholds are breached." },
+    { meaning: "Dashboards and alerting are in place for critical automations. The team can see the health of the estate and respond quickly to failures. The gap is proactivity — monitoring catches failures after they happen, not before.", next: "Implement anomaly detection on your highest-volume automations. Rather than waiting for a threshold breach, detect when behavior deviates from its normal pattern — this catches slow degradation before it becomes an outage." },
+    { meaning: "Monitoring is proactive. SLAs are defined and measured, anomaly detection catches issues early, and some automations can recover from common failures automatically. The team manages the automation estate rather than firefighting it.", next: "Move toward self-healing automations. For your most common failure modes, build automated recovery — retry logic, fallback paths, and automatic escalation when recovery fails." },
+    { meaning: "The automation estate has full observability. Every automation is instrumented, failures trigger automatic recovery, and predictive monitoring flags risks before they become incidents. The team's time is spent on improvement, not maintenance.", next: "Apply automation to the monitoring function itself. Use ML to identify patterns in failure data, predict which automations are at risk, and prioritize maintenance proactively rather than reactively." }
+  ],
+  governance: [
+    { meaning: "There is no inventory of automated systems, no ownership, and no policies governing how automation is built or used. Automations operate as black boxes — nobody knows exactly what they do, and nobody is responsible when they fail.", next: "Create a simple automation registry: a spreadsheet listing every automation, what it does, who built it, and who is responsible for it. This single document transforms invisible risk into manageable risk." },
+    { meaning: "Informal norms exist — people know roughly what's allowed — but nothing is documented or enforced. When automations fail or cause problems, accountability is unclear and resolution depends on finding the original developer.", next: "Write a one-page automation policy. Define what requires approval before deployment, who is responsible for production automations, and what happens when something goes wrong." },
+    { meaning: "A formal automation policy is in place and a central registry is maintained. The basics of governance exist. The gap is that governance is still reactive and compliance-oriented — it prevents bad things rather than actively enabling good ones.", next: "Establish an Automation Centre of Excellence (CoE) or governance board with representatives from IT, operations, legal, and business units. Give it authority to approve, prioritize, and retire automations." },
+    { meaning: "A governance board operates with real authority. Change management, risk assessments, and impact reviews are part of the deployment process. Governance is a trust-building function — it makes automation safer and faster, not slower.", next: "Automate governance itself. Build a self-service pipeline where teams can request, test, and deploy automations within guardrails — without bottlenecking a central team for every change." },
+    { meaning: "Governance is proactive, automated, and embedded throughout the automation lifecycle. Compliance is monitored continuously, the registry is self-updating, and the organization can demonstrate a trustworthy automation estate to auditors, regulators, and partners.", next: "Extend governance to third-party and partner automations. As your automation estate connects to the outside world, the governance boundary must expand to match — including vendor SLAs, data handling, and change notification." }
+  ]
+};
+
+function renderOverview() {
+  const t = total();
+  const tier = getTier(t);
+  const maxDim = DIMS.reduce((a,b) => scores[b.id] > scores[a.id] ? b : a);
+  const minDim = DIMS.reduce((a,b) => scores[b.id] < scores[a.id] ? b : a);
+  const td = TIER_DETAILS[tier.label] || {};
+
+  document.getElementById("ov-metrics").innerHTML = `
+    <div class="metric-card accent">
+      <div class="metric-label">Score</div>
+      <div class="metric-value">${t}<span style="font-size:16px;font-weight:400;color:rgba(210,246,252,0.4)">/30</span></div>
+    </div>
+    <div class="metric-card" style="background:var(--sky);border-color:var(--sky-deep)">
+      <div class="metric-label" style="color:var(--navy-light)">Tier</div>
+      <div class="metric-value" style="font-size:20px;padding-top:4px;color:var(--navy)">${tier.label}</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Strongest</div>
+      <div class="metric-value" style="font-size:15px;padding-top:4px;line-height:1.3">${maxDim.title}</div>
+      <div class="metric-sub" style="font-family:'DM Mono',monospace">${scores[maxDim.id]}/5</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Priority gap</div>
+      <div class="metric-value" style="font-size:15px;padding-top:4px;line-height:1.3">${minDim.title}</div>
+      <div class="metric-sub" style="font-family:'DM Mono',monospace">${scores[minDim.id]}/5</div>
+    </div>`;
+
+  document.getElementById("ov-tier-context").innerHTML = `
+    <div class="tier-context">
+      <div class="tier-context-header">
+        <span class="tier-context-badge" style="background:${tier.bg};color:${tier.color}">${tier.label}</span>
+        <span class="tier-context-title">What this tier means for your organization</span>
+      </div>
+      <div class="tier-context-desc">${td.desc || ''}</div>
+      <div class="tier-context-signals">
+        ${(td.signals||[]).map(s=>`<div class="tier-signal"><div class="tier-signal-dot"></div><span>${s}</span></div>`).join('')}
+      </div>
+      ${td.next ? `<div class="tier-next"><strong>What to do next:</strong> ${td.next}</div>` : ''}
+    </div>`;
+
+  document.getElementById("ov-bars").innerHTML = DIMS.map(d =>
+    `<div class="radar-row">
+      <span class="radar-label">${d.title}</span>
+      <div class="radar-track"><div class="radar-fill" style="width:${(scores[d.id]/5)*100}%"></div></div>
+      <span class="radar-score">${scores[d.id]}/5</span>
+    </div>`).join('');
+
+  document.getElementById("ov-levels").innerHTML = DIMS.map(d => {
+    const s = scores[d.id];
+    const info = (DIM_MEANINGS[d.id] || [])[s-1] || {};
+    const hasNext = s < 5 && info.next;
+    return `<li>
+      <div class="level-row-top">
+        <span class="levels-badge">${s}/5</span>
+        <div>
+          <div class="levels-name">${d.title}</div>
+          <div style="font-size:12px;color:var(--text-muted);font-style:italic">${d.levels[s-1]}</div>
+        </div>
+      </div>
+      <div class="level-meaning">${info.meaning || ''}</div>
+      ${hasNext ? `<div class="level-next-wrap"><span class="level-next-arrow">→</span><span><strong style="color:var(--navy);font-weight:600">To reach level ${s+1}:</strong> ${info.next}</span></div>` : (s===5 ? `<div class="level-next-wrap"><span class="level-next-arrow">✓</span><span><strong style="color:var(--navy);font-weight:600">Maximum level reached.</strong> Focus on sustaining and compounding this advantage.</span></div>` : '')}
+    </li>`;
+  }).join('');
+}
+
+function renderHistory() {
+  const c = document.getElementById("history-container");
+  if (!history.length) {
+    c.innerHTML = `<div class="empty-state">
+      <div class="empty-icon">◎</div>
+      <div class="empty-title">No snapshots yet</div>
+      <div class="empty-sub">Save your results to start tracking progress over time.</div>
+    </div>`;
+    return;
+  }
+  c.innerHTML = history.map(entry => {
+    const tier = getTier(entry.total);
+    return `<div class="history-card">
+      <div class="history-top">
+        <div>
+          <div class="history-date">${entry.date}</div>
+          <div class="history-pts">${entry.total}/30 pts</div>
+        </div>
+        <div class="tier-pill" style="background:${tier.bg};color:${tier.color};border:1px solid ${tier.color}33">${tier.label}</div>
+      </div>
+      <div class="history-grid">
+        ${DIMS.map(d => `<div class="history-dim">
+          <span class="history-dim-name">${d.title}</span>
+          <span class="history-dim-score">${entry.scores?.[d.id]??'—'}/5</span>
+        </div>`).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function switchTab(name, btn) {
+  ["assess","overview","history"].forEach(t => {
+    document.getElementById("tab-"+t).style.display = t===name ? "block" : "none";
+  });
+  document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  if (name === "overview") renderOverview();
+  if (name === "history") renderHistory();
+}
+
+const TIER_TOOLTIPS = [
+  { name:"Manual",     range:"0 – 9 pts",   desc:"No meaningful automation. All work is done manually. Processes are undocumented and entirely dependent on people to function." },
+  { name:"Assisted",   range:"10 – 14 pts", desc:"Basic automation exists in isolated pockets — scripts, macros, simple tools — but with no shared platform, strategy, or coordination across teams." },
+  { name:"Partial",    range:"15 – 19 pts", desc:"Real automation is in production but significant manual handoffs remain. Automation is project-by-project rather than a systematic organizational capability." },
+  { name:"Advanced",   range:"20 – 24 pts", desc:"Automation covers most core processes with a unified platform and governance. The organization is scaling breadth and beginning to introduce intelligent automation." },
+  { name:"Autonomous", range:"25 – 30 pts", desc:"End-to-end automation with self-healing systems. Humans focus on exceptions and strategy. Automation is a structural competitive advantage, not just an efficiency tool." },
+];
+
+(function initTooltips() {
+  const labels = document.querySelectorAll('#tier-labels .tier-lbl');
+  const tooltip = document.getElementById('tier-tooltip');
+  const overlay = document.getElementById('tier-tooltip-overlay');
+  const ttName  = document.getElementById('tt-name');
+  const ttRange = document.getElementById('tt-range');
+  const ttDesc  = document.getElementById('tt-desc');
+
+  labels.forEach((lbl, i) => {
+    lbl.addEventListener('mouseenter', () => {
+      const d = TIER_TOOLTIPS[i];
+      ttName.textContent  = d.name;
+      ttRange.textContent = d.range;
+      ttDesc.textContent  = d.desc;
+
+      const overlayRect = overlay.parentElement.getBoundingClientRect();
+      const lblRect     = lbl.getBoundingClientRect();
+      const TW = 200;
+      let left = (lblRect.left - overlayRect.left) + lblRect.width / 2 - TW / 2;
+      left = Math.max(0, Math.min(left, overlayRect.width - TW));
+
+      const arrowLeft = (lblRect.left - overlayRect.left) + lblRect.width / 2 - left;
+      tooltip.style.left = left + 'px';
+      tooltip.setAttribute('data-arrow', Math.max(14, Math.min(arrowLeft, TW - 14)));
+      updateArrow();
+      tooltip.classList.add('visible');
+    });
+    lbl.addEventListener('mouseleave', () => {
+      tooltip.classList.remove('visible');
+    });
+  });
+
+  function updateArrow() {
+    const pos = tooltip.getAttribute('data-arrow') || '50';
+    let st = document.getElementById('arrow-style');
+    if (!st) { st = document.createElement('style'); st.id = 'arrow-style'; document.head.appendChild(st); }
+    st.textContent = `.tier-tooltip::before { left: ${pos}px; }`;
+  }
+})();
+
+load();
+renderDims();
+updateHeader();
+</script>
+</body>
+</html>
