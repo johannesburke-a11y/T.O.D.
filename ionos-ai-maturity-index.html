@@ -1,0 +1,1218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Maturity Index — IONOS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #0b2a63;
+    --navy-deep: #071b42;
+    --navy-mid: #1a3f7a;
+    --navy-light: #2a5298;
+    --ice: #d2f6fc;
+    --ice-deep: #a8eef8;
+    --sky: #dbedf8;
+    --sky-deep: #b8d8f0;
+    --white: #ffffff;
+    --off-white: #f4f8fd;
+    --text-primary: #0b2a63;
+    --text-secondary: #3a5480;
+    --text-muted: #7a94bc;
+    --border: rgba(11,42,99,0.12);
+    --border-strong: rgba(11,42,99,0.2);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Figtree', sans-serif;
+    background: var(--off-white);
+    color: var(--text-primary);
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  .header {
+    background: var(--navy);
+    padding: 0;
+    position: relative;
+    overflow: visible;
+  }
+  .header::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -80px;
+    width: 320px; height: 320px;
+    border-radius: 50%;
+    background: rgba(210,246,252,0.07);
+    pointer-events: none;
+  }
+  .header::after {
+    content: '';
+    position: absolute;
+    bottom: -40px; left: 30%;
+    width: 200px; height: 200px;
+    border-radius: 50%;
+    background: rgba(219,237,248,0.05);
+    pointer-events: none;
+  }
+  .header-inner {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 2.5rem 2rem 0;
+    position: relative;
+    z-index: 1;
+  }
+  .header-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 2rem;
+  }
+  .brand-line {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .brand-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--ice);
+  }
+  .brand-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    color: rgba(210,246,252,0.6);
+    text-transform: uppercase;
+  }
+  .header h1 {
+    font-size: clamp(26px, 4vw, 36px);
+    font-weight: 900;
+    color: var(--white);
+    letter-spacing: -0.02em;
+    line-height: 1.05;
+  }
+  .header h1 span { color: var(--ice); }
+
+  .score-summary {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .score-big {
+    font-size: 48px;
+    font-weight: 900;
+    color: var(--white);
+    letter-spacing: -0.03em;
+    line-height: 1;
+  }
+  .score-big span { font-size: 22px; color: rgba(255,255,255,0.4); font-weight: 400; }
+  .tier-pill {
+    padding: 6px 16px;
+    border-radius: 100px;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  /* ── Progress bar ── */
+  .progress-section {
+    padding: 0 2rem 2rem;
+    max-width: 860px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+    overflow: visible;
+  }
+  .tier-track {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 3px;
+    margin-bottom: 6px;
+  }
+  .tier-seg {
+    height: 5px;
+    border-radius: 3px;
+    background: rgba(255,255,255,0.15);
+    transition: background 0.4s;
+  }
+  .tier-seg.active { background: var(--ice); }
+  .tier-labels {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 3px;
+  }
+  .tier-lbl {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.3);
+    text-align: center;
+    transition: color 0.3s;
+    position: static;
+    cursor: default;
+    padding-bottom: 4px;
+  }
+  .tier-lbl.active { color: var(--ice); font-weight: 500; }
+  .tier-lbl:hover { color: rgba(255,255,255,0.7); }
+
+  .tier-tooltip-overlay {
+    position: absolute;
+    bottom: -10px;
+    left: 0;
+    width: 100%;
+    pointer-events: none;
+    z-index: 200;
+  }
+  .tier-tooltip {
+    position: absolute;
+    top: 0;
+    width: 200px;
+    background: #071b42;
+    border: 1px solid rgba(210,246,252,0.2);
+    border-radius: 10px;
+    padding: 12px 14px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.18s ease, transform 0.18s ease;
+    transform: translateY(4px);
+    text-align: left;
+    font-family: 'Figtree', sans-serif;
+    box-shadow: 0 12px 32px rgba(7,27,66,0.55);
+  }
+  .tier-tooltip.visible { opacity: 1; transform: translateY(0); }
+  .tier-tooltip::before {
+    content: '';
+    position: absolute;
+    top: -5px;
+    width: 9px; height: 9px;
+    background: #071b42;
+    border-left: 1px solid rgba(210,246,252,0.2);
+    border-top: 1px solid rgba(210,246,252,0.2);
+    transform: rotate(45deg);
+  }
+  .tier-tooltip-name {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--ice);
+    margin-bottom: 3px;
+    letter-spacing: 0.03em;
+  }
+  .tier-tooltip-range {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: rgba(210,246,252,0.4);
+    margin-bottom: 7px;
+    letter-spacing: 0.04em;
+  }
+  .tier-tooltip-desc {
+    font-size: 12.5px;
+    color: rgba(219,237,248,0.8);
+    line-height: 1.6;
+  }
+
+  /* ── Tabs ── */
+  .tabs-bar {
+    background: var(--navy-deep);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  .tabs-inner {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 0 2rem;
+    display: flex;
+    gap: 0;
+  }
+  .tab-btn {
+    padding: 14px 20px;
+    font-family: 'Figtree', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.45);
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    letter-spacing: 0.02em;
+    transition: all 0.2s;
+  }
+  .tab-btn:hover { color: rgba(255,255,255,0.75); }
+  .tab-btn.active { color: var(--ice); border-bottom-color: var(--ice); }
+
+  /* ── Main layout ── */
+  .main {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+
+  /* ── Dimension cards ── */
+  .dim-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 10px;
+    overflow: hidden;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .dim-card:hover { border-color: var(--border-strong); }
+  .dim-card.active { border-color: var(--navy-light); box-shadow: 0 0 0 3px rgba(11,42,99,0.06); }
+
+  .dim-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 18px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .dim-icon {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    background: var(--sky);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+    color: var(--navy);
+  }
+  .dim-meta { flex: 1; min-width: 0; }
+  .dim-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 5px;
+  }
+  .dim-bar-wrap {
+    height: 3px;
+    background: var(--sky);
+    border-radius: 2px;
+  }
+  .dim-bar {
+    height: 3px;
+    border-radius: 2px;
+    background: var(--navy);
+    transition: width 0.4s cubic-bezier(0.4,0,0.2,1);
+  }
+  .dim-score-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--navy);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .dim-chevron {
+    font-size: 10px;
+    color: var(--text-muted);
+    transition: transform 0.2s;
+  }
+  .dim-chevron.open { transform: rotate(180deg); }
+
+  .dim-body {
+    padding: 0 18px 18px;
+    border-top: 1px solid var(--border);
+    display: none;
+  }
+  .dim-body.open { display: block; }
+  .dim-desc {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    padding: 12px 0 14px;
+  }
+  .level-grid { display: flex; flex-direction: column; gap: 6px; }
+  .level-btn {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 12px;
+    background: var(--off-white);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.15s;
+    font-family: 'Figtree', sans-serif;
+  }
+  .level-btn:hover { border-color: var(--border-strong); background: var(--sky); }
+  .level-btn.selected {
+    background: var(--navy);
+    border-color: var(--navy);
+  }
+  .level-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-muted);
+    min-width: 16px;
+    margin-top: 2px;
+    flex-shrink: 0;
+  }
+  .level-btn.selected .level-num { color: var(--ice); }
+  .level-text {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+  }
+  .level-btn.selected .level-text { color: var(--white); font-weight: 500; }
+
+  /* ── Save button ── */
+  .save-btn {
+    width: 100%;
+    margin-top: 10px;
+    padding: 14px;
+    background: var(--navy);
+    color: var(--ice);
+    border: none;
+    border-radius: 10px;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .save-btn:hover { background: var(--navy-mid); }
+  .save-btn.saved { background: #1a7a4a; color: #a8f0cc; }
+
+  .btn-row { display: flex; gap: 8px; margin-top: 10px; }
+  .btn-row .save-btn { flex: 1; margin-top: 0; }
+  .reset-btn {
+    padding: 14px 18px;
+    background: transparent;
+    color: var(--text-muted);
+    border: 1px solid var(--border-strong);
+    border-radius: 10px;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .reset-btn:hover { border-color: #c0392b; color: #c0392b; background: rgba(192,57,43,0.05); }
+  .reset-btn.confirming { border-color: #c0392b; color: #fff; background: #c0392b; }
+
+  .confirm-bar {
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 8px;
+    padding: 10px 14px;
+    background: rgba(192,57,43,0.06);
+    border: 1px solid rgba(192,57,43,0.2);
+    border-radius: 8px;
+  }
+  .confirm-bar.visible { display: flex; }
+  .confirm-msg { font-size: 13px; color: #a93226; }
+  .confirm-actions { display: flex; gap: 6px; flex-shrink: 0; }
+  .confirm-yes {
+    padding: 6px 14px;
+    background: #c0392b; color: #fff;
+    border: none; border-radius: 6px;
+    font-family: 'DM Mono', monospace; font-size: 11px;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    cursor: pointer; font-weight: 500;
+  }
+  .confirm-no {
+    padding: 6px 14px;
+    background: transparent; color: var(--text-muted);
+    border: 1px solid var(--border-strong); border-radius: 6px;
+    font-family: 'DM Mono', monospace; font-size: 11px;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    cursor: pointer;
+  }
+
+  /* ── Tier context block ── */
+  .tier-context {
+    border-radius: 12px;
+    padding: 1.4rem 1.5rem;
+    margin-bottom: 1rem;
+    border: 1px solid rgba(11,42,99,0.15);
+    background: var(--navy);
+  }
+  .tier-context-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .tier-context-badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: 100px;
+    font-weight: 500;
+  }
+  .tier-context-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--white);
+  }
+  .tier-context-desc {
+    font-size: 14px;
+    color: rgba(219,237,248,0.8);
+    line-height: 1.7;
+    margin-bottom: 12px;
+  }
+  .tier-context-signals {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .tier-signal {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 13px;
+    color: rgba(210,246,252,0.7);
+    line-height: 1.5;
+  }
+  .tier-signal-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--ice);
+    margin-top: 6px;
+    flex-shrink: 0;
+  }
+  .tier-next {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    font-size: 13px;
+    color: rgba(210,246,252,0.55);
+  }
+  .tier-next strong { color: var(--ice); font-weight: 600; }
+
+  /* ── Expanded level cards ── */
+  .levels-list li { flex-direction: column; align-items: stretch; gap: 0; padding: 14px 0; }
+  .level-row-top { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+  .level-meaning {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.65;
+    margin-bottom: 6px;
+  }
+  .level-next-wrap {
+    display: flex;
+    align-items: flex-start;
+    gap: 7px;
+    padding: 8px 10px;
+    background: var(--sky);
+    border-radius: 7px;
+    font-size: 12px;
+    color: var(--navy-light);
+    line-height: 1.55;
+  }
+  .level-next-arrow { font-size: 11px; margin-top: 1px; flex-shrink: 0; color: var(--navy); }
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 10px;
+    margin-bottom: 1.5rem;
+  }
+  .metric-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.1rem 1.25rem;
+  }
+  .metric-card.accent {
+    background: var(--navy);
+    border-color: var(--navy);
+  }
+  .metric-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+  }
+  .metric-card.accent .metric-label { color: rgba(210,246,252,0.55); }
+  .metric-value {
+    font-size: 28px;
+    font-weight: 900;
+    color: var(--navy);
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+  .metric-card.accent .metric-value { color: var(--ice); }
+  .metric-sub {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 3px;
+  }
+  .metric-card.accent .metric-sub { color: rgba(210,246,252,0.45); }
+
+  .breakdown-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+  }
+  .breakdown-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+  }
+  .radar-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+  .radar-label {
+    font-size: 13px;
+    color: var(--text-secondary);
+    width: 160px;
+    flex-shrink: 0;
+  }
+  .radar-track {
+    flex: 1;
+    height: 5px;
+    background: var(--sky);
+    border-radius: 3px;
+  }
+  .radar-fill {
+    height: 5px;
+    border-radius: 3px;
+    background: var(--navy);
+    transition: width 0.5s cubic-bezier(0.4,0,0.2,1);
+  }
+  .radar-score {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--navy);
+    width: 28px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  .levels-list { list-style: none; }
+  .levels-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .levels-list li:last-child { border-bottom: none; }
+  .levels-badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--white);
+    background: var(--navy);
+    padding: 2px 8px;
+    border-radius: 4px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .levels-name { font-size: 13px; font-weight: 600; color: var(--navy); margin-bottom: 2px; }
+  .levels-desc { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+
+  /* ── History tab ── */
+  .empty-state {
+    text-align: center;
+    padding: 4rem 1rem;
+    color: var(--text-muted);
+  }
+  .empty-icon { font-size: 40px; margin-bottom: 12px; color: var(--sky-deep); }
+  .empty-title { font-size: 15px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; }
+  .empty-sub { font-size: 13px; }
+
+  .history-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.1rem 1.25rem;
+    margin-bottom: 10px;
+  }
+  .history-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+  .history-date { font-size: 14px; font-weight: 700; color: var(--navy); }
+  .history-pts { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  .history-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+  }
+  .history-dim {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 4px;
+  }
+  .history-dim-name { font-size: 11px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .history-dim-score { font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 500; color: var(--navy); flex-shrink: 0; }
+
+  /* ── Footer ── */
+  .footer {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 1rem 2rem 2.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid var(--border);
+  }
+  .footer-brand {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+  .save-status {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+  }
+
+  @media (max-width: 600px) {
+    .header-inner, .progress-section, .main, .tabs-inner, .footer { padding-left: 1rem; padding-right: 1rem; }
+    .radar-label { width: 110px; }
+    .history-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-inner">
+    <div class="header-top">
+      <div>
+        <div class="brand-line">
+          <div class="brand-dot"></div>
+          <span class="brand-label">Marvin Scale (T.O.D.)</span>
+        </div>
+        <h1>AI Maturity <span>Index</span></h1>
+      </div>
+      <div class="score-summary">
+        <div>
+          <div class="score-big" id="hdr-score">—<span>/30</span></div>
+        </div>
+        <div id="hdr-tier-pill" class="tier-pill" style="background:rgba(210,246,252,0.12);color:var(--ice);">—</div>
+      </div>
+    </div>
+  </div>
+  <div class="progress-section">
+    <div class="tier-track" id="tier-track">
+      <div class="tier-seg" data-tier="0"></div>
+      <div class="tier-seg" data-tier="1"></div>
+      <div class="tier-seg" data-tier="2"></div>
+      <div class="tier-seg" data-tier="3"></div>
+      <div class="tier-seg" data-tier="4"></div>
+    </div>
+    <div class="tier-labels" id="tier-labels">
+      <div class="tier-lbl" data-tier="0">Unaware</div>
+      <div class="tier-lbl" data-tier="1">Exploring</div>
+      <div class="tier-lbl" data-tier="2">Building</div>
+      <div class="tier-lbl" data-tier="3">Scaling</div>
+      <div class="tier-lbl" data-tier="4">Leading</div>
+    </div>
+    <div class="tier-tooltip-overlay" id="tier-tooltip-overlay">
+      <div class="tier-tooltip" id="tier-tooltip">
+        <div class="tier-tooltip-name" id="tt-name"></div>
+        <div class="tier-tooltip-range" id="tt-range"></div>
+        <div class="tier-tooltip-desc" id="tt-desc"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tabs-bar">
+  <div class="tabs-inner">
+    <button class="tab-btn active" onclick="switchTab('assess', this)">Assessment</button>
+    <button class="tab-btn" onclick="switchTab('overview', this)">Overview</button>
+    <button class="tab-btn" onclick="switchTab('history', this)">History</button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- ASSESS TAB -->
+  <div id="tab-assess">
+    <div id="dims-container"></div>
+    <div class="btn-row">
+      <button class="save-btn" id="save-btn" onclick="saveScores()">Save Results</button>
+      <button class="reset-btn" id="reset-btn" onclick="promptReset()">Reset</button>
+    </div>
+    <div class="confirm-bar" id="confirm-bar">
+      <span class="confirm-msg">This will clear all scores and saved history. Are you sure?</span>
+      <div class="confirm-actions">
+        <button class="confirm-no" onclick="cancelReset()">Cancel</button>
+        <button class="confirm-yes" onclick="confirmReset()">Yes, reset</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- OVERVIEW TAB -->
+  <div id="tab-overview" style="display:none">
+    <div class="metrics-grid" id="ov-metrics"></div>
+    <div id="ov-tier-context"></div>
+    <div class="breakdown-card">
+      <div class="breakdown-title">Dimension Breakdown</div>
+      <div id="ov-bars"></div>
+    </div>
+    <div class="breakdown-card">
+      <div class="breakdown-title">Current Levels &amp; What They Mean</div>
+      <ul class="levels-list" id="ov-levels"></ul>
+    </div>
+  </div>
+
+  <!-- HISTORY TAB -->
+  <div id="tab-history" style="display:none">
+    <div id="history-container"></div>
+  </div>
+
+</div>
+
+<div class="footer">
+  <span class="footer-brand">AI Maturity Index · IONOS</span>
+  <span class="save-status" id="save-status">No unsaved changes</span>
+</div>
+
+<script>
+const ICONS = {
+  strategy:   `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><line x1="12" y1="3" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="21"/><line x1="3" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="21" y2="12"/></svg>`,
+  talent:     `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7" r="4"/><path d="M2 21v-2a4 4 0 0 1 4-4h6a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/><path d="M21 21v-2a4 4 0 0 0-3-3.85"/></svg>`,
+  data:       `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v4c0 1.66 4.03 3 9 3s9-1.34 9-3V5"/><path d="M3 9v4c0 1.66 4.03 3 9 3s9-1.34 9-3V9"/><path d="M3 13v4c0 1.66 4.03 3 9 3s9-1.34 9-3v-4"/></svg>`,
+  operating:  `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/><circle cx="12" cy="12" r="3"/></svg>`,
+  production: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>`,
+  governance: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>`,
+};
+
+const DIMS = [
+  { id:"strategy",   title:"Strategy & Vision",    desc:"Is AI tied to measurable business outcomes, not just an IT initiative?",
+    levels:["No AI strategy exists; ad-hoc experimentation only","AI is on the roadmap but not tied to business KPIs","AI goals exist with owner accountability and budgets","AI is embedded in annual planning with clear OKRs","AI drives product differentiation and competitive strategy"] },
+  { id:"talent",     title:"Talent & Culture",      desc:"Do your people have the skills and mindset to build and use AI?",
+    levels:["No dedicated AI skills; general skepticism or fear","A few individuals experimenting independently","Small AI team exists; some upskilling programs running","AI literacy widespread; hiring strategy targets ML/data roles","AI-first culture; continuous learning embedded in workflows"] },
+  { id:"data",       title:"Data Infrastructure",   desc:"Is your data actually AI-ready — clean, accessible, governed?",
+    levels:["Data siloed, inconsistent, no governance","Some data pipelines exist but quality is unreliable","Core datasets are clean and accessible to AI teams","Real-time data pipelines with feature stores in place","Unified data platform; automated quality monitoring"] },
+  { id:"operating",  title:"Operating Model",       desc:"Are workflows redesigned around AI, or is AI bolted onto old processes?",
+    levels:["AI tools added without changing underlying processes","Isolated workflow changes in one or two teams","AI has redesigned core workflows in 2–3 functions","Cross-functional AI deployment with feedback loops","AI agents handle end-to-end workflows autonomously"] },
+  { id:"production", title:"Production & Scale",    desc:"How broadly and reliably is AI deployed across the organization?",
+    levels:["No AI in production; still in POC or pilot phase","1–2 models in production with manual monitoring","Several models in production with basic MLOps","Robust MLOps; models deployed across multiple functions","AI at scale; automated retraining, monitoring, rollback"] },
+  { id:"governance", title:"Governance & Risk",     desc:"Do you have guardrails, oversight, and accountability for AI decisions?",
+    levels:["No policies, no oversight of AI outputs","Informal guidelines; incident response is reactive","AI policy exists; basic audit trails in place","Formal AI review board; bias and risk assessments run","Proactive governance with automated compliance monitoring"] },
+];
+
+const TIERS = [
+  { min:0,  max:9,  label:"Unaware",   bg:"rgba(210,246,252,0.12)", color:"#d2f6fc" },
+  { min:10, max:14, label:"Exploring", bg:"rgba(219,237,248,0.2)",  color:"#dbedf8" },
+  { min:15, max:19, label:"Building",  bg:"rgba(219,237,248,0.2)",  color:"#9dc8e8" },
+  { min:20, max:24, label:"Scaling",   bg:"rgba(210,246,252,0.25)", color:"#58d8f0" },
+  { min:25, max:30, label:"Leading",   bg:"rgba(210,246,252,0.35)", color:"#d2f6fc" },
+];
+
+const STORAGE_KEY = "ionos_ai_maturity_v1";
+
+let scores = { strategy:3, talent:4, data:3, operating:2, production:3, governance:3 };
+let history = [];
+let expanded = null;
+let unsaved = false;
+
+function load() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const d = JSON.parse(raw);
+      if (d.scores) scores = d.scores;
+      if (d.history) history = d.history;
+    }
+  } catch(e) {}
+}
+
+function getTier(total) {
+  return TIERS.find(t => total >= t.min && total <= t.max) || TIERS[0];
+}
+function getTierIndex(total) {
+  return TIERS.findIndex(t => total >= t.min && total <= t.max);
+}
+
+function total() { return Object.values(scores).reduce((a,b)=>a+b,0); }
+
+function updateHeader() {
+  const t = total();
+  const tier = getTier(t);
+  const ti = getTierIndex(t);
+  document.getElementById("hdr-score").innerHTML = t + '<span>/30</span>';
+  const pill = document.getElementById("hdr-tier-pill");
+  pill.textContent = tier.label;
+  pill.style.background = tier.bg;
+  pill.style.color = tier.color;
+  document.querySelectorAll(".tier-seg").forEach((el, i) => {
+    el.classList.toggle("active", i <= ti);
+  });
+  document.querySelectorAll(".tier-lbl").forEach((el, i) => {
+    el.classList.toggle("active", i === ti);
+  });
+}
+
+function renderDims() {
+  const c = document.getElementById("dims-container");
+  c.innerHTML = DIMS.map(d => {
+    const s = scores[d.id];
+    const pct = (s/5)*100;
+    const isOpen = expanded === d.id;
+    return `<div class="dim-card ${isOpen?'active':''}" id="card-${d.id}">
+      <div class="dim-header" onclick="toggleDim('${d.id}')">
+        <div class="dim-icon">${ICONS[d.id]}</div>
+        <div class="dim-meta">
+          <div class="dim-title">${d.title}</div>
+          <div class="dim-bar-wrap"><div class="dim-bar" id="bar-${d.id}" style="width:${pct}%"></div></div>
+        </div>
+        <div class="dim-score-label">
+          <span id="score-lbl-${d.id}">${s}/5</span>
+          <span class="dim-chevron ${isOpen?'open':''}" id="chev-${d.id}">▼</span>
+        </div>
+      </div>
+      <div class="dim-body ${isOpen?'open':''}" id="body-${d.id}">
+        <div class="dim-desc">${d.desc}</div>
+        <div class="level-grid">
+          ${d.levels.map((l,i) => `<button class="level-btn ${s===i+1?'selected':''}" id="lvl-${d.id}-${i+1}" onclick="setScore('${d.id}',${i+1})">
+            <span class="level-num">${i+1}</span>
+            <span class="level-text">${l}</span>
+          </button>`).join('')}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleDim(id) {
+  expanded = expanded === id ? null : id;
+  renderDims();
+}
+
+function setScore(id, val) {
+  scores[id] = val;
+  unsaved = true;
+  document.getElementById("save-status").textContent = "Unsaved changes";
+  const pct = (val/5)*100;
+  const bar = document.getElementById("bar-"+id);
+  if (bar) bar.style.width = pct+"%";
+  const lbl = document.getElementById("score-lbl-"+id);
+  if (lbl) lbl.textContent = val+"/5";
+  DIMS.find(d=>d.id===id).levels.forEach((_,i) => {
+    const btn = document.getElementById("lvl-"+id+"-"+(i+1));
+    if (btn) btn.classList.toggle("selected", i+1 === val);
+  });
+  updateHeader();
+  if (document.getElementById("tab-overview").style.display !== "none") renderOverview();
+}
+
+function saveScores() {
+  const entry = {
+    date: new Date().toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"}),
+    scores: {...scores},
+    total: total()
+  };
+  history = [entry, ...history].slice(0, 12);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({scores, history}));
+  unsaved = false;
+  const btn = document.getElementById("save-btn");
+  btn.textContent = "✓ Saved";
+  btn.classList.add("saved");
+  document.getElementById("save-status").textContent = "Results saved";
+  setTimeout(() => { btn.textContent = "Save Results"; btn.classList.remove("saved"); }, 2200);
+}
+
+function promptReset() {
+  document.getElementById("confirm-bar").classList.add("visible");
+  document.getElementById("reset-btn").classList.add("confirming");
+}
+function cancelReset() {
+  document.getElementById("confirm-bar").classList.remove("visible");
+  document.getElementById("reset-btn").classList.remove("confirming");
+}
+function confirmReset() {
+  scores = { strategy:1, talent:1, data:1, operating:1, production:1, governance:1 };
+  history = [];
+  localStorage.removeItem(STORAGE_KEY);
+  expanded = null;
+  unsaved = false;
+  cancelReset();
+  renderDims();
+  updateHeader();
+  document.getElementById("save-status").textContent = "Reset — no saved data";
+}
+
+const TIER_DETAILS = {
+  "Unaware": {
+    desc: "AI is not yet a strategic priority for your organization. Experimentation may be happening in pockets, but there is no coordinated effort, no ownership, and no investment behind it. The risk here is not ignorance — it's drift: competitors are compounding advantages while the organization waits.",
+    signals: ["No dedicated AI budget or headcount","Leadership hasn't formally endorsed an AI direction","Data is siloed and not treated as a strategic asset","AI decisions are reactive, not planned"],
+    next: "The immediate priority is establishing a point of ownership — one person or team accountable for AI — and running a structured audit of where AI could create the most value."
+  },
+  "Exploring": {
+    desc: "Your organization is beginning to take AI seriously. Pilots are running, individuals are experimenting, and there is growing awareness that AI matters. But efforts are fragmented — no shared infrastructure, no clear success criteria, and limited connection to business outcomes.",
+    signals: ["1–2 AI pilots underway, often in a single department","No central data platform or shared tooling","AI strategy exists on paper but isn't driving decisions","Progress depends on individual champions, not systems"],
+    next: "The priority is moving from individual initiative to organizational capability: define success metrics for existing pilots, centralize data access, and get executive sponsorship behind at least one high-visibility use case."
+  },
+  "Building": {
+    desc: "You have real AI in production and a team capable of building more. The challenge now is that AI is still project-by-project — value is created locally but doesn't compound across the organization. Workflows haven't fundamentally changed, and AI remains something the AI team does rather than something the whole business runs on.",
+    signals: ["Several models in production, but in isolated functions","MLOps is basic — monitoring is manual, retraining is ad hoc","AI literacy is uneven across departments","Governance exists but hasn't been stress-tested at scale"],
+    next: "The unlock is cross-functional deployment: redesign 2–3 workflows outside the AI team's home turf, establish shared infrastructure, and tie AI outputs to board-level metrics."
+  },
+  "Scaling": {
+    desc: "AI is embedded across multiple functions and is visibly contributing to business performance. You have infrastructure, talent, and processes that allow you to deploy reliably and repeatedly. The gap is depth: you're scaling breadth faster than you're compounding value, and governance is lagging behind deployment velocity.",
+    signals: ["AI deployed in 4+ business functions","Automated MLOps with model monitoring and rollback","AI OKRs reviewed in quarterly business reviews","Cross-functional AI teams with clear ownership and mandates"],
+    next: "Focus shifts to agentic AI — autonomous workflows that reduce human orchestration — and to governance that can keep pace with scale. High performers at this stage allocate 20%+ of digital budget to AI."
+  },
+  "Leading": {
+    desc: "AI is a core driver of how your organization competes. It shapes product decisions, customer experiences, and operational efficiency at enterprise scale. You are in the 6% of organizations that McKinsey classifies as AI high performers — those attributing more than 5% of EBIT to AI. The priority now is maintaining the lead and avoiding the organizational complacency that often follows early success.",
+    signals: ["AI agents handle end-to-end workflows autonomously","Continuous learning loops improve models in production","AI governance is proactive, automated, and audited","AI is a named competitive differentiator in market positioning"],
+    next: "Sustain by investing in proprietary data advantages, AI talent retention, and governance that scales with agentic systems. The moat is organizational — not technological."
+  }
+};
+
+const DIM_MEANINGS = {
+  strategy: [
+    { meaning: "AI decisions happen when someone has a good idea, not when the business needs it. There is no plan, no owner, and no budget. Momentum depends entirely on individual motivation.", next: "Appoint a single AI owner and run a 2-week opportunity scan to identify your highest-value use case." },
+    { meaning: "AI appears in roadmaps and strategy documents, but it isn't connected to measurable outcomes. Teams know AI matters; they don't know what 'good' looks like for their context.", next: "Attach AI initiatives to existing KPIs. Define what a successful AI deployment would change in your P&L or NPS." },
+    { meaning: "There is an accountable owner, a budget, and clear goals. AI investment is protected. The gap is integration — AI strategy still lives separately from annual business planning.", next: "Bring AI OKRs into the core planning cycle. Tie AI milestones to quarterly business reviews." },
+    { meaning: "AI is part of how the business plans and measures itself. OKRs reference AI outcomes, budgets are allocated based on AI roadmaps, and leadership actively tracks progress.", next: "Elevate AI from an operational lever to a product differentiator. Ask: what could AI enable that competitors cannot easily replicate?" },
+    { meaning: "AI is a named source of competitive advantage. It shapes product decisions, pricing, customer experience, and market positioning. The strategy and the AI roadmap are the same document.", next: "Sustain by investing in proprietary data assets and building AI capabilities that are structurally hard to copy." }
+  ],
+  talent: [
+    { meaning: "The organization has no meaningful AI capability and limited appetite to build it. Fear, skepticism, or simple unfamiliarity with AI is the dominant culture.", next: "Run a lunch-and-learn series. Identify 2–3 internal AI enthusiasts and give them protected time to experiment." },
+    { meaning: "A handful of individuals are building AI skills on their own initiative. There's no coordinated upskilling, no hiring strategy, and no shared environment for experimentation.", next: "Create a formal internal AI community. Give experimenters shared infrastructure and a path to present findings to leadership." },
+    { meaning: "A dedicated AI team exists with the skills to build and deploy. Upskilling programs are running but coverage is uneven — AI literacy drops sharply outside the core team.", next: "Extend AI literacy training to business units. Embed 'AI translators' in product, ops, and marketing teams." },
+    { meaning: "AI skills are widespread. Most functions have people who can work with AI tools, interpret model outputs, and commission AI work. Hiring strategies specifically target ML and data talent.", next: "Move from literacy to fluency. The goal is employees who redesign their own workflows using AI, not just consume AI tools." },
+    { meaning: "Learning is continuous and embedded. Teams experiment, fail fast, and share findings systematically. AI fluency is a hiring criterion across the organization, not just in technical roles.", next: "Invest in proprietary AI training programs and talent retention strategies. Your people are now a competitive asset." }
+  ],
+  data: [
+    { meaning: "Data lives in separate systems that don't talk to each other. Quality is inconsistent, definitions vary by team, and there is no governance. AI built on this foundation will fail silently.", next: "Pick one critical dataset and clean it properly. Document ownership, definitions, and refresh cadence. Start the habit." },
+    { meaning: "Some data pipelines exist and produce usable outputs, but reliability is a constant concern. Data quality issues are discovered after they've caused problems, not before.", next: "Invest in data observability tooling. Establish data SLAs for your most business-critical datasets." },
+    { meaning: "Core datasets are clean, well-documented, and accessible to the AI team. Data quality is good enough to build production models. The limitation is that access is still restricted to a technical minority.", next: "Build a self-serve data layer so business teams can explore and use data without engineering support." },
+    { meaning: "Real-time pipelines feed feature stores that AI models can consume directly. Data is a platform, not a project. Business teams can access and analyze data without bottlenecking engineering.", next: "Focus on data contracts and automated quality monitoring to maintain reliability as data volume grows." },
+    { meaning: "Data is a unified strategic asset. Quality is monitored automatically, lineage is tracked, and the organization can trust its data at scale. New AI use cases can be prototyped quickly because the foundation is solid.", next: "Explore proprietary data acquisition and synthetic data strategies to build data moats competitors cannot easily replicate." }
+  ],
+  operating: [
+    { meaning: "AI tools have been added to existing processes without changing how work actually gets done. The result is friction: AI outputs require manual handling, and the efficiency gains are marginal.", next: "Map one end-to-end workflow and identify every step where AI could remove human handling. Redesign it from scratch." },
+    { meaning: "One or two teams have changed how they work around AI. It's encouraging, but localized — learnings don't spread, and the rest of the organization continues as before.", next: "Document what worked in the teams that changed. Create a playbook and actively replicate it in two new functions." },
+    { meaning: "AI has genuinely redesigned how core workflows operate in 2–3 functions. Employees in those functions now work differently — AI handles routine decisions, humans handle exceptions.", next: "Establish cross-functional AI deployment squads. The next wave of workflows should span multiple departments, not just one." },
+    { meaning: "AI is embedded across functions with feedback loops that improve over time. Cross-functional teams coordinate AI deployment, and workflow redesign is now a standard part of how new initiatives are launched.", next: "Introduce agentic AI for multi-step workflows where human orchestration is the bottleneck. Start with high-volume, low-risk processes." },
+    { meaning: "AI agents handle complete workflows end-to-end — from trigger to output — with humans reviewing exceptions rather than managing every step. The organization has fundamentally changed how work gets done.", next: "Focus on governance of autonomous systems: when do agents escalate? How are errors detected and corrected at scale?" }
+  ],
+  production: [
+    { meaning: "AI exists in demos and prototypes but not in live systems. The gap between 'it works in a notebook' and 'it works in production' has not been crossed.", next: "Ship one model to production, no matter how small. A recommendation widget or a simple classifier counts. The goal is crossing the deployment threshold." },
+    { meaning: "One or two models are live, but they require significant manual attention — monitoring dashboards are checked by humans, retraining is done by hand, and incidents are discovered reactively.", next: "Instrument your production models with automated alerting. Define SLAs for model performance and data drift." },
+    { meaning: "Multiple models are in production across different use cases, with basic MLOps tooling in place. The team can deploy reliably, but scaling requires proportional headcount growth.", next: "Invest in a model registry and automated retraining pipelines. The goal is deploying more models without growing the team linearly." },
+    { meaning: "MLOps is robust. Models are deployed, monitored, retrained, and rolled back automatically. The team can manage a large portfolio of production models without operational chaos.", next: "Shift focus to model portfolio management: which models are creating the most value, and which should be retired or replaced?" },
+    { meaning: "AI operates at scale with full automation of the deployment lifecycle. Models are continuously evaluated, retrained on new data, and versioned. The organization can run hundreds of models with a lean team.", next: "Explore foundation model fine-tuning and proprietary model development to build capabilities competitors cannot buy off the shelf." }
+  ],
+  governance: [
+    { meaning: "AI outputs are not reviewed, audited, or governed. Models make decisions — or support decisions — without any formal oversight. This creates invisible risk: bias, errors, and regulatory exposure that nobody is tracking.", next: "Write a one-page AI use policy. Define what AI can and cannot decide autonomously, and assign a named owner for each production AI system." },
+    { meaning: "There are informal norms about how AI should be used, but they're not enforced and incidents surface reactively. Governance is a person, not a system.", next: "Formalize your AI policy and create a lightweight incident log. When an AI system fails or produces a bad output, capture it and learn from it." },
+    { meaning: "A written AI policy exists and basic audit trails are in place. Teams know the rules. The gap is that governance is compliance-oriented — it prevents bad things rather than enabling good ones.", next: "Stand up an AI review board with representatives from legal, product, and data. Give it teeth: new production deployments require sign-off." },
+    { meaning: "A formal AI review board operates with real authority. Bias assessments, fairness audits, and risk evaluations are part of the deployment process. Governance is a trust-building function, not just a check-box.", next: "Automate compliance monitoring. The goal is continuous governance — alerts trigger when models drift, not when humans happen to check." },
+    { meaning: "Governance is proactive, automated, and deeply embedded in the deployment lifecycle. Compliance is monitored continuously, AI use cases are registered and tracked, and the organization can demonstrate trustworthy AI to regulators, customers, and partners.", next: "Extend governance to third-party and partner AI systems. Your governance posture is now a competitive and regulatory advantage." }
+  ]
+};
+
+function renderOverview() {
+  const t = total();
+  const tier = getTier(t);
+  const ti = getTierIndex(t);
+  const maxDim = DIMS.reduce((a,b) => scores[b.id] > scores[a.id] ? b : a);
+  const minDim = DIMS.reduce((a,b) => scores[b.id] < scores[a.id] ? b : a);
+  const td = TIER_DETAILS[tier.label] || {};
+
+  document.getElementById("ov-metrics").innerHTML = `
+    <div class="metric-card accent">
+      <div class="metric-label">Score</div>
+      <div class="metric-value">${t}<span style="font-size:16px;font-weight:400;color:rgba(210,246,252,0.4)">/30</span></div>
+    </div>
+    <div class="metric-card" style="background:var(--sky);border-color:var(--sky-deep)">
+      <div class="metric-label" style="color:var(--navy-light)">Tier</div>
+      <div class="metric-value" style="font-size:20px;padding-top:4px;color:var(--navy)">${tier.label}</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Strongest</div>
+      <div class="metric-value" style="font-size:15px;padding-top:4px;line-height:1.3">${maxDim.title}</div>
+      <div class="metric-sub" style="font-family:'DM Mono',monospace">${scores[maxDim.id]}/5</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Priority gap</div>
+      <div class="metric-value" style="font-size:15px;padding-top:4px;line-height:1.3">${minDim.title}</div>
+      <div class="metric-sub" style="font-family:'DM Mono',monospace">${scores[minDim.id]}/5</div>
+    </div>`;
+
+  document.getElementById("ov-tier-context").innerHTML = `
+    <div class="tier-context">
+      <div class="tier-context-header">
+        <span class="tier-context-badge" style="background:${tier.bg};color:${tier.color}">${tier.label}</span>
+        <span class="tier-context-title">What this tier means for your organization</span>
+      </div>
+      <div class="tier-context-desc">${td.desc || ''}</div>
+      <div class="tier-context-signals">
+        ${(td.signals||[]).map(s=>`<div class="tier-signal"><div class="tier-signal-dot"></div><span>${s}</span></div>`).join('')}
+      </div>
+      ${td.next ? `<div class="tier-next"><strong>What to do next:</strong> ${td.next}</div>` : ''}
+    </div>`;
+
+  document.getElementById("ov-bars").innerHTML = DIMS.map(d =>
+    `<div class="radar-row">
+      <span class="radar-label">${d.title}</span>
+      <div class="radar-track"><div class="radar-fill" style="width:${(scores[d.id]/5)*100}%"></div></div>
+      <span class="radar-score">${scores[d.id]}/5</span>
+    </div>`).join('');
+
+  document.getElementById("ov-levels").innerHTML = DIMS.map(d => {
+    const s = scores[d.id];
+    const info = (DIM_MEANINGS[d.id] || [])[s-1] || {};
+    const hasNext = s < 5 && info.next;
+    const nextLevel = s < 5 ? d.levels[s] : null;
+    return `<li>
+      <div class="level-row-top">
+        <span class="levels-badge">${s}/5</span>
+        <div>
+          <div class="levels-name">${d.title}</div>
+          <div style="font-size:12px;color:var(--text-muted);font-style:italic">${d.levels[s-1]}</div>
+        </div>
+      </div>
+      <div class="level-meaning">${info.meaning || ''}</div>
+      ${hasNext ? `<div class="level-next-wrap"><span class="level-next-arrow">→</span><span><strong style="color:var(--navy);font-weight:600">To reach level ${s+1}:</strong> ${info.next}</span></div>` : (s===5 ? `<div class="level-next-wrap"><span class="level-next-arrow">✓</span><span><strong style="color:var(--navy);font-weight:600">Maximum level reached.</strong> Focus on sustaining and compounding this advantage.</span></div>` : '')}
+    </li>`;
+  }).join('');
+}
+
+function renderHistory() {
+  const c = document.getElementById("history-container");
+  if (!history.length) {
+    c.innerHTML = `<div class="empty-state">
+      <div class="empty-icon">◎</div>
+      <div class="empty-title">No snapshots yet</div>
+      <div class="empty-sub">Save your results to start tracking progress over time.</div>
+    </div>`;
+    return;
+  }
+  c.innerHTML = history.map(entry => {
+    const tier = getTier(entry.total);
+    return `<div class="history-card">
+      <div class="history-top">
+        <div>
+          <div class="history-date">${entry.date}</div>
+          <div class="history-pts">${entry.total}/30 pts</div>
+        </div>
+        <div class="tier-pill" style="background:${tier.bg};color:${tier.color};border:1px solid ${tier.color}33">${tier.label}</div>
+      </div>
+      <div class="history-grid">
+        ${DIMS.map(d => `<div class="history-dim">
+          <span class="history-dim-name">${d.title}</span>
+          <span class="history-dim-score">${entry.scores?.[d.id]??'—'}/5</span>
+        </div>`).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function switchTab(name, btn) {
+  ["assess","overview","history"].forEach(t => {
+    document.getElementById("tab-"+t).style.display = t===name ? "block" : "none";
+  });
+  document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  if (name === "overview") renderOverview();
+  if (name === "history") renderHistory();
+}
+
+const TIER_TOOLTIPS = [
+  { name:"Unaware",   range:"0 – 9 pts",   desc:"No meaningful AI activity. There is no strategy, no ownership, no investment, and no coordinated effort. Any AI use is entirely ad-hoc and individual." },
+  { name:"Exploring", range:"10 – 14 pts", desc:"Awareness is growing and pilots are running, but efforts are fragmented. There is no shared infrastructure, no clear success criteria, and no connection to business outcomes." },
+  { name:"Building",  range:"15 – 19 pts", desc:"Real AI is in production in a few areas. The team can build and deploy, but AI is still project-by-project. Workflows haven't fundamentally changed and value doesn't yet compound." },
+  { name:"Scaling",   range:"20 – 24 pts", desc:"AI is embedded across multiple functions and visibly contributing to business performance. Infrastructure and talent exist. Governance and cross-functional depth are the next challenges." },
+  { name:"Leading",   range:"25 – 30 pts", desc:"AI is a core competitive driver shaping product, operations, and strategy. You are in the global top 6% of organizations, attributing 5%+ of EBIT to AI." },
+];
+
+(function initTooltips() {
+  const labels = document.querySelectorAll('#tier-labels .tier-lbl');
+  const tooltip = document.getElementById('tier-tooltip');
+  const overlay = document.getElementById('tier-tooltip-overlay');
+  const ttName  = document.getElementById('tt-name');
+  const ttRange = document.getElementById('tt-range');
+  const ttDesc  = document.getElementById('tt-desc');
+
+  labels.forEach((lbl, i) => {
+    lbl.addEventListener('mouseenter', () => {
+      const d = TIER_TOOLTIPS[i];
+      ttName.textContent  = d.name;
+      ttRange.textContent = d.range;
+      ttDesc.textContent  = d.desc;
+
+      // Position: center tooltip on the label, clamped to overlay width
+      const overlayRect = overlay.parentElement.getBoundingClientRect();
+      const lblRect     = lbl.getBoundingClientRect();
+      const TW = 200;
+      let left = (lblRect.left - overlayRect.left) + lblRect.width / 2 - TW / 2;
+      left = Math.max(0, Math.min(left, overlayRect.width - TW));
+
+      // Arrow position relative to tooltip
+      const arrowLeft = (lblRect.left - overlayRect.left) + lblRect.width / 2 - left;
+      tooltip.style.left = left + 'px';
+      tooltip.querySelector('::before'); // trigger reflow
+      tooltip.style.setProperty('--arrow-left', Math.max(14, Math.min(arrowLeft, TW - 14)) + 'px');
+
+      // Set arrow via inline style on ::before via a wrapper trick
+      tooltip.setAttribute('data-arrow', Math.max(14, Math.min(arrowLeft, TW - 14)));
+      updateArrow();
+
+      tooltip.classList.add('visible');
+    });
+    lbl.addEventListener('mouseleave', () => {
+      tooltip.classList.remove('visible');
+    });
+  });
+
+  function updateArrow() {
+    const pos = tooltip.getAttribute('data-arrow') || '50';
+    // inject a style tag to position ::before dynamically
+    let st = document.getElementById('arrow-style');
+    if (!st) { st = document.createElement('style'); st.id = 'arrow-style'; document.head.appendChild(st); }
+    st.textContent = `.tier-tooltip::before { left: ${pos}px; }`;
+  }
+})();
+
+load();
+renderDims();
+updateHeader();
+</script>
+</body>
+</html>
