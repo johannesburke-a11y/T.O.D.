@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tech Maturity Index — IONOS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #0b2a63;
+    --navy-deep: #071b42;
+    --navy-mid: #1a3f7a;
+    --navy-light: #2a5298;
+    --ice: #d2f6fc;
+    --ice-deep: #a8eef8;
+    --sky: #dbedf8;
+    --sky-deep: #b8d8f0;
+    --white: #ffffff;
+    --off-white: #f4f8fd;
+    --text-primary: #0b2a63;
+    --text-secondary: #3a5480;
+    --text-muted: #7a94bc;
+    --border: rgba(11,42,99,0.12);
+    --border-strong: rgba(11,42,99,0.2);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Figtree', sans-serif;
+    background: var(--off-white);
+    color: var(--text-primary);
+    min-height: 100vh;
+  }
+
+  .header {
+    background: var(--navy);
+    padding: 0;
+    position: relative;
+    overflow: visible;
+  }
+  .header::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -80px;
+    width: 320px; height: 320px;
+    border-radius: 50%;
+    background: rgba(210,246,252,0.07);
+    pointer-events: none;
+  }
+  .header::after {
+    content: '';
+    position: absolute;
+    bottom: -40px; left: 30%;
+    width: 200px; height: 200px;
+    border-radius: 50%;
+    background: rgba(219,237,248,0.05);
+    pointer-events: none;
+  }
+  .header-inner {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 2.5rem 2rem 0;
+    position: relative;
+    z-index: 1;
+  }
+  .header-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 2rem;
+  }
+  .brand-line {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .brand-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ice); }
+  .brand-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    color: rgba(210,246,252,0.6);
+    text-transform: uppercase;
+  }
+  .header h1 {
+    font-size: clamp(26px, 4vw, 36px);
+    font-weight: 900;
+    color: var(--white);
+    letter-spacing: -0.02em;
+    line-height: 1.05;
+  }
+  .header h1 span { color: var(--ice); }
+
+  .score-summary { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .score-big {
+    font-size: 48px;
+    font-weight: 900;
+    color: var(--white);
+    letter-spacing: -0.03em;
+    line-height: 1;
+  }
+  .score-big span { font-size: 22px; color: rgba(255,255,255,0.4); font-weight: 400; }
+  .tier-pill {
+    padding: 6px 16px;
+    border-radius: 100px;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .progress-section {
+    padding: 0 2rem 2rem;
+    max-width: 860px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+    overflow: visible;
+  }
+  .tier-track {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 3px;
+    margin-bottom: 6px;
+  }
+  .tier-seg {
+    height: 5px;
+    border-radius: 3px;
+    background: rgba(255,255,255,0.15);
+    transition: background 0.4s;
+  }
+  .tier-seg.active { background: var(--ice); }
+  .tier-labels {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 3px;
+  }
+  .tier-lbl {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.3);
+    text-align: center;
+    transition: color 0.3s;
+    position: static;
+    cursor: default;
+    padding-bottom: 4px;
+  }
+  .tier-lbl.active { color: var(--ice); font-weight: 500; }
+  .tier-lbl:hover { color: rgba(255,255,255,0.7); }
+
+  .tier-tooltip-overlay {
+    position: absolute;
+    bottom: -10px;
+    left: 0;
+    width: 100%;
+    pointer-events: none;
+    z-index: 200;
+  }
+  .tier-tooltip {
+    position: absolute;
+    top: 0;
+    width: 210px;
+    background: #071b42;
+    border: 1px solid rgba(210,246,252,0.2);
+    border-radius: 10px;
+    padding: 12px 14px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.18s ease, transform 0.18s ease;
+    transform: translateY(4px);
+    text-align: left;
+    font-family: 'Figtree', sans-serif;
+    box-shadow: 0 12px 32px rgba(7,27,66,0.55);
+  }
+  .tier-tooltip.visible { opacity: 1; transform: translateY(0); }
+  .tier-tooltip::before {
+    content: '';
+    position: absolute;
+    top: -5px;
+    width: 9px; height: 9px;
+    background: #071b42;
+    border-left: 1px solid rgba(210,246,252,0.2);
+    border-top: 1px solid rgba(210,246,252,0.2);
+    transform: rotate(45deg);
+  }
+  .tier-tooltip-name { font-size: 12px; font-weight: 700; color: var(--ice); margin-bottom: 3px; letter-spacing: 0.03em; }
+  .tier-tooltip-range { font-family: 'DM Mono', monospace; font-size: 10px; color: rgba(210,246,252,0.4); margin-bottom: 7px; letter-spacing: 0.04em; }
+  .tier-tooltip-desc { font-size: 12.5px; color: rgba(219,237,248,0.8); line-height: 1.6; }
+
+  .tabs-bar { background: var(--navy-deep); border-bottom: 1px solid rgba(255,255,255,0.08); }
+  .tabs-inner { max-width: 860px; margin: 0 auto; padding: 0 2rem; display: flex; }
+  .tab-btn {
+    padding: 14px 20px;
+    font-family: 'Figtree', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.45);
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    letter-spacing: 0.02em;
+    transition: all 0.2s;
+  }
+  .tab-btn:hover { color: rgba(255,255,255,0.75); }
+  .tab-btn.active { color: var(--ice); border-bottom-color: var(--ice); }
+
+  .main { max-width: 860px; margin: 0 auto; padding: 2rem; }
+
+  .dim-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 10px;
+    overflow: hidden;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .dim-card:hover { border-color: var(--border-strong); }
+  .dim-card.active { border-color: var(--navy-light); box-shadow: 0 0 0 3px rgba(11,42,99,0.06); }
+
+  .dim-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 18px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .dim-icon {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    background: var(--sky);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    color: var(--navy);
+  }
+  .dim-meta { flex: 1; min-width: 0; }
+  .dim-title { font-size: 14px; font-weight: 700; color: var(--navy); margin-bottom: 5px; }
+  .dim-bar-wrap { height: 3px; background: var(--sky); border-radius: 2px; }
+  .dim-bar { height: 3px; border-radius: 2px; background: var(--navy); transition: width 0.4s cubic-bezier(0.4,0,0.2,1); }
+  .dim-score-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--navy);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .dim-chevron { font-size: 10px; color: var(--text-muted); transition: transform 0.2s; }
+  .dim-chevron.open { transform: rotate(180deg); }
+
+  .dim-body { padding: 0 18px 18px; border-top: 1px solid var(--border); display: none; }
+  .dim-body.open { display: block; }
+  .dim-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.6; padding: 12px 0 14px; }
+  .level-grid { display: flex; flex-direction: column; gap: 6px; }
+  .level-btn {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 12px;
+    background: var(--off-white);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.15s;
+    font-family: 'Figtree', sans-serif;
+  }
+  .level-btn:hover { border-color: var(--border-strong); background: var(--sky); }
+  .level-btn.selected { background: var(--navy); border-color: var(--navy); }
+  .level-num { font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 500; color: var(--text-muted); min-width: 16px; margin-top: 2px; flex-shrink: 0; }
+  .level-btn.selected .level-num { color: var(--ice); }
+  .level-text { font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
+  .level-btn.selected .level-text { color: var(--white); font-weight: 500; }
+
+  .btn-row { display: flex; gap: 8px; margin-top: 10px; }
+  .btn-row .save-btn { flex: 1; margin-top: 0; }
+  .save-btn {
+    width: 100%;
+    margin-top: 10px;
+    padding: 14px;
+    background: var(--navy);
+    color: var(--ice);
+    border: none;
+    border-radius: 10px;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .save-btn:hover { background: var(--navy-mid); }
+  .save-btn.saved { background: #1a7a4a; color: #a8f0cc; }
+  .reset-btn {
+    padding: 14px 18px;
+    background: transparent;
+    color: var(--text-muted);
+    border: 1px solid var(--border-strong);
+    border-radius: 10px;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .reset-btn:hover { border-color: #c0392b; color: #c0392b; background: rgba(192,57,43,0.05); }
+  .reset-btn.confirming { border-color: #c0392b; color: #fff; background: #c0392b; }
+  .confirm-bar {
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 8px;
+    padding: 10px 14px;
+    background: rgba(192,57,43,0.06);
+    border: 1px solid rgba(192,57,43,0.2);
+    border-radius: 8px;
+  }
+  .confirm-bar.visible { display: flex; }
+  .confirm-msg { font-size: 13px; color: #a93226; }
+  .confirm-actions { display: flex; gap: 6px; flex-shrink: 0; }
+  .confirm-yes { padding: 6px 14px; background: #c0392b; color: #fff; border: none; border-radius: 6px; font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; font-weight: 500; }
+  .confirm-no { padding: 6px 14px; background: transparent; color: var(--text-muted); border: 1px solid var(--border-strong); border-radius: 6px; font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; }
+
+  .tier-context { border-radius: 12px; padding: 1.4rem 1.5rem; margin-bottom: 1rem; border: 1px solid rgba(11,42,99,0.15); background: var(--navy); }
+  .tier-context-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .tier-context-badge { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; padding: 3px 10px; border-radius: 100px; font-weight: 500; }
+  .tier-context-title { font-size: 16px; font-weight: 700; color: var(--white); }
+  .tier-context-desc { font-size: 14px; color: rgba(219,237,248,0.8); line-height: 1.7; margin-bottom: 12px; }
+  .tier-context-signals { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px; margin-top: 12px; }
+  .tier-signal { display: flex; align-items: flex-start; gap: 8px; font-size: 13px; color: rgba(210,246,252,0.7); line-height: 1.5; }
+  .tier-signal-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--ice); margin-top: 6px; flex-shrink: 0; }
+  .tier-next { margin-top: 14px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.1); font-size: 13px; color: rgba(210,246,252,0.55); }
+  .tier-next strong { color: var(--ice); font-weight: 600; }
+
+  .levels-list li { flex-direction: column; align-items: stretch; gap: 0; padding: 14px 0; }
+  .level-row-top { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+  .level-meaning { font-size: 13px; color: var(--text-secondary); line-height: 1.65; margin-bottom: 6px; }
+  .level-next-wrap { display: flex; align-items: flex-start; gap: 7px; padding: 8px 10px; background: var(--sky); border-radius: 7px; font-size: 12px; color: var(--navy-light); line-height: 1.55; }
+  .level-next-arrow { font-size: 11px; margin-top: 1px; flex-shrink: 0; color: var(--navy); }
+
+  .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-bottom: 1.5rem; }
+  .metric-card { background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 1.1rem 1.25rem; }
+  .metric-card.accent { background: var(--navy); border-color: var(--navy); }
+  .metric-label { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 6px; }
+  .metric-card.accent .metric-label { color: rgba(210,246,252,0.55); }
+  .metric-value { font-size: 28px; font-weight: 900; color: var(--navy); letter-spacing: -0.02em; line-height: 1; }
+  .metric-card.accent .metric-value { color: var(--ice); }
+  .metric-sub { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
+  .metric-card.accent .metric-sub { color: rgba(210,246,252,0.45); }
+
+  .breakdown-card { background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem; }
+  .breakdown-title { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 1rem; }
+  .radar-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+  .radar-label { font-size: 13px; color: var(--text-secondary); width: 160px; flex-shrink: 0; }
+  .radar-track { flex: 1; height: 5px; background: var(--sky); border-radius: 3px; }
+  .radar-fill { height: 5px; border-radius: 3px; background: var(--navy); transition: width 0.5s cubic-bezier(0.4,0,0.2,1); }
+  .radar-score { font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 500; color: var(--navy); width: 28px; text-align: right; flex-shrink: 0; }
+
+  .levels-list { list-style: none; }
+  .levels-list li { display: flex; align-items: flex-start; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .levels-list li:last-child { border-bottom: none; }
+  .levels-badge { font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 500; color: var(--white); background: var(--navy); padding: 2px 8px; border-radius: 4px; flex-shrink: 0; margin-top: 1px; }
+  .levels-name { font-size: 13px; font-weight: 600; color: var(--navy); margin-bottom: 2px; }
+  .levels-desc { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+
+  .empty-state { text-align: center; padding: 4rem 1rem; color: var(--text-muted); }
+  .empty-icon { font-size: 40px; margin-bottom: 12px; color: var(--sky-deep); }
+  .empty-title { font-size: 15px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; }
+  .empty-sub { font-size: 13px; }
+
+  .history-card { background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 1.1rem 1.25rem; margin-bottom: 10px; }
+  .history-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .history-date { font-size: 14px; font-weight: 700; color: var(--navy); }
+  .history-pts { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  .history-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .history-dim { display: flex; justify-content: space-between; align-items: center; gap: 4px; }
+  .history-dim-name { font-size: 11px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .history-dim-score { font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 500; color: var(--navy); flex-shrink: 0; }
+
+  .footer { max-width: 860px; margin: 0 auto; padding: 1rem 2rem 2.5rem; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border); }
+  .footer-brand { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); }
+  .save-status { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.06em; color: var(--text-muted); }
+
+  @media (max-width: 600px) {
+    .header-inner, .progress-section, .main, .tabs-inner, .footer { padding-left: 1rem; padding-right: 1rem; }
+    .radar-label { width: 110px; }
+    .history-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-inner">
+    <div class="header-top">
+      <div>
+        <div class="brand-line">
+          <div class="brand-dot"></div>
+          <span class="brand-label">Turing Scale (T.O.D.)</span>
+        </div>
+        <h1>Tech Maturity <span>Index</span></h1>
+      </div>
+      <div class="score-summary">
+        <div><div class="score-big" id="hdr-score">—<span>/30</span></div></div>
+        <div id="hdr-tier-pill" class="tier-pill" style="background:rgba(210,246,252,0.12);color:var(--ice);">—</div>
+      </div>
+    </div>
+  </div>
+  <div class="progress-section">
+    <div class="tier-track" id="tier-track">
+      <div class="tier-seg" data-tier="0"></div>
+      <div class="tier-seg" data-tier="1"></div>
+      <div class="tier-seg" data-tier="2"></div>
+      <div class="tier-seg" data-tier="3"></div>
+      <div class="tier-seg" data-tier="4"></div>
+    </div>
+    <div class="tier-labels" id="tier-labels">
+      <div class="tier-lbl" data-tier="0">Novice</div>
+      <div class="tier-lbl" data-tier="1">Developing</div>
+      <div class="tier-lbl" data-tier="2">Capable</div>
+      <div class="tier-lbl" data-tier="3">Proficient</div>
+      <div class="tier-lbl" data-tier="4">Expert</div>
+    </div>
+    <div class="tier-tooltip-overlay" id="tier-tooltip-overlay">
+      <div class="tier-tooltip" id="tier-tooltip">
+        <div class="tier-tooltip-name" id="tt-name"></div>
+        <div class="tier-tooltip-range" id="tt-range"></div>
+        <div class="tier-tooltip-desc" id="tt-desc"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="tabs-bar">
+  <div class="tabs-inner">
+    <button class="tab-btn active" onclick="switchTab('assess', this)">Assessment</button>
+    <button class="tab-btn" onclick="switchTab('overview', this)">Overview</button>
+    <button class="tab-btn" onclick="switchTab('history', this)">History</button>
+  </div>
+</div>
+
+<div class="main">
+  <div id="tab-assess">
+    <div id="dims-container"></div>
+    <div class="btn-row">
+      <button class="save-btn" id="save-btn" onclick="saveScores()">Save Results</button>
+      <button class="reset-btn" id="reset-btn" onclick="promptReset()">Reset</button>
+    </div>
+    <div class="confirm-bar" id="confirm-bar">
+      <span class="confirm-msg">This will clear all scores and saved history. Are you sure?</span>
+      <div class="confirm-actions">
+        <button class="confirm-no" onclick="cancelReset()">Cancel</button>
+        <button class="confirm-yes" onclick="confirmReset()">Yes, reset</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="tab-overview" style="display:none">
+    <div class="metrics-grid" id="ov-metrics"></div>
+    <div id="ov-tier-context"></div>
+    <div class="breakdown-card">
+      <div class="breakdown-title">Dimension Breakdown</div>
+      <div id="ov-bars"></div>
+    </div>
+    <div class="breakdown-card">
+      <div class="breakdown-title">Current Levels &amp; What They Mean</div>
+      <ul class="levels-list" id="ov-levels"></ul>
+    </div>
+  </div>
+
+  <div id="tab-history" style="display:none">
+    <div id="history-container"></div>
+  </div>
+</div>
+
+<div class="footer">
+  <span class="footer-brand">Tech Maturity Index · IONOS</span>
+  <span class="save-status" id="save-status">No unsaved changes</span>
+</div>
+
+<script>
+const ICONS = {
+  foundations: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>`,
+  software:    `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>`,
+  data:        `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v4c0 1.66 4.03 3 9 3s9-1.34 9-3V5"/><path d="M3 9v4c0 1.66 4.03 3 9 3s9-1.34 9-3V9"/><path d="M3 13v4c0 1.66 4.03 3 9 3s9-1.34 9-3v-4"/></svg>`,
+  automation:  `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/><circle cx="12" cy="12" r="3"/></svg>`,
+  ai:          `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2z"/><circle cx="9" cy="14" r="1" fill="currentColor"/><circle cx="15" cy="14" r="1" fill="currentColor"/></svg>`,
+  security:    `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`,
+};
+
+const DIMS = [
+  { id:"foundations", title:"Digital Foundations",    desc:"How comfortably do you navigate computers, devices, and everyday digital tools?",
+    levels:[
+      "Struggles with basic computer tasks; needs help with email, files, or browsers",
+      "Can handle email, web browsing, and simple file management independently",
+      "Comfortable with office software, cloud storage, video calls, and device settings",
+      "Efficient across multiple platforms; customizes workflows and troubleshoots independently",
+      "Fully fluent — sets up new environments, manages devices, and teaches others confidently"
+    ]},
+  { id:"software",    title:"Software & Productivity", desc:"How effectively do you use software tools to get work done faster and better?",
+    levels:[
+      "Uses only basic features of common tools; rarely explores beyond defaults",
+      "Can follow instructions to use most workplace software adequately",
+      "Uses advanced features in core tools (e.g. formulas, macros, templates, integrations)",
+      "Builds custom workflows using multiple tools together; saves significant time routinely",
+      "Masters any software quickly; builds tools, templates, and systems for self and others"
+    ]},
+  { id:"data",        title:"Data & Analytics",        desc:"How confidently do you work with data — reading, analysing, and drawing conclusions from it?",
+    levels:[
+      "Avoids data tasks; uncomfortable with spreadsheets or numbers beyond basics",
+      "Can read and interpret simple charts, tables, and reports prepared by others",
+      "Builds spreadsheets, pivot tables, and basic charts; can query simple datasets",
+      "Analyses data independently using SQL, BI tools, or scripting; draws actionable insights",
+      "Designs data pipelines, builds dashboards, and uses statistical methods to drive decisions"
+    ]},
+  { id:"automation",  title:"Automation & Workflows",  desc:"How well do you identify and eliminate repetitive work through automation?",
+    levels:[
+      "Does not automate anything; completes repetitive tasks manually without questioning them",
+      "Aware that automation exists; has used basic features like scheduled emails or auto-replies",
+      "Builds simple automations using no-code tools (e.g. Zapier, Power Automate, macros)",
+      "Designs multi-step automated workflows connecting several tools; saves hours per week",
+      "Builds sophisticated automations with branching logic, error handling, and API integrations"
+    ]},
+  { id:"ai",          title:"AI & Emerging Tech",      desc:"How effectively do you use AI tools to enhance your work and thinking?",
+    levels:[
+      "Has not used AI tools in a work context; unaware of practical applications",
+      "Has tried AI tools casually; uses them for simple tasks like drafting emails",
+      "Uses AI tools regularly and intentionally; writes effective prompts for varied tasks",
+      "Integrates AI into daily workflows; uses multiple models for research, writing, code, and analysis",
+      "Builds AI-powered workflows; evaluates models critically and stays ahead of emerging capabilities"
+    ]},
+  { id:"security",    title:"Digital Security",        desc:"How well do you protect yourself, your data, and your organization online?",
+    levels:[
+      "Unaware of basic security practices; reuses passwords, ignores updates, clicks unknown links",
+      "Understands basic risks; uses some security hygiene but inconsistently",
+      "Uses a password manager, MFA on all accounts, and recognizes common phishing tactics",
+      "Applies security thinking proactively; reviews app permissions, uses VPN, audits access regularly",
+      "Deep security awareness; advises others, responds to incidents, and stays current on threats"
+    ]},
+];
+
+const TIERS = [
+  { min:0,  max:9,  label:"Novice",     bg:"rgba(210,246,252,0.12)", color:"#d2f6fc" },
+  { min:10, max:14, label:"Developing", bg:"rgba(219,237,248,0.2)",  color:"#dbedf8" },
+  { min:15, max:19, label:"Capable",    bg:"rgba(219,237,248,0.2)",  color:"#9dc8e8" },
+  { min:20, max:24, label:"Proficient", bg:"rgba(210,246,252,0.25)", color:"#58d8f0" },
+  { min:25, max:30, label:"Expert",     bg:"rgba(210,246,252,0.35)", color:"#d2f6fc" },
+];
+
+const STORAGE_KEY = "ionos_tech_maturity_v1";
+let scores = { foundations:1, software:1, data:1, automation:1, ai:1, security:1 };
+let history = [];
+let expanded = null;
+let unsaved = false;
+
+function load() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const d = JSON.parse(raw);
+      if (d.scores) scores = d.scores;
+      if (d.history) history = d.history;
+    }
+  } catch(e) {}
+}
+
+function getTier(t) { return TIERS.find(t2 => t >= t2.min && t <= t2.max) || TIERS[0]; }
+function getTierIndex(t) { return TIERS.findIndex(t2 => t >= t2.min && t <= t2.max); }
+function total() { return Object.values(scores).reduce((a,b)=>a+b,0); }
+
+function updateHeader() {
+  const t = total(), tier = getTier(t), ti = getTierIndex(t);
+  document.getElementById("hdr-score").innerHTML = t + '<span>/30</span>';
+  const pill = document.getElementById("hdr-tier-pill");
+  pill.textContent = tier.label; pill.style.background = tier.bg; pill.style.color = tier.color;
+  document.querySelectorAll(".tier-seg").forEach((el,i) => el.classList.toggle("active", i <= ti));
+  document.querySelectorAll(".tier-lbl").forEach((el,i) => el.classList.toggle("active", i === ti));
+}
+
+function renderDims() {
+  document.getElementById("dims-container").innerHTML = DIMS.map(d => {
+    const s = scores[d.id], pct = (s/5)*100, isOpen = expanded === d.id;
+    return `<div class="dim-card ${isOpen?'active':''}" id="card-${d.id}">
+      <div class="dim-header" onclick="toggleDim('${d.id}')">
+        <div class="dim-icon">${ICONS[d.id]}</div>
+        <div class="dim-meta">
+          <div class="dim-title">${d.title}</div>
+          <div class="dim-bar-wrap"><div class="dim-bar" id="bar-${d.id}" style="width:${pct}%"></div></div>
+        </div>
+        <div class="dim-score-label">
+          <span id="score-lbl-${d.id}">${s}/5</span>
+          <span class="dim-chevron ${isOpen?'open':''}" id="chev-${d.id}">▼</span>
+        </div>
+      </div>
+      <div class="dim-body ${isOpen?'open':''}" id="body-${d.id}">
+        <div class="dim-desc">${d.desc}</div>
+        <div class="level-grid">
+          ${d.levels.map((l,i) => `<button class="level-btn ${s===i+1?'selected':''}" id="lvl-${d.id}-${i+1}" onclick="setScore('${d.id}',${i+1})">
+            <span class="level-num">${i+1}</span><span class="level-text">${l}</span>
+          </button>`).join('')}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleDim(id) { expanded = expanded === id ? null : id; renderDims(); }
+
+function setScore(id, val) {
+  scores[id] = val; unsaved = true;
+  document.getElementById("save-status").textContent = "Unsaved changes";
+  const bar = document.getElementById("bar-"+id); if (bar) bar.style.width = (val/5)*100+"%";
+  const lbl = document.getElementById("score-lbl-"+id); if (lbl) lbl.textContent = val+"/5";
+  DIMS.find(d=>d.id===id).levels.forEach((_,i) => {
+    const btn = document.getElementById("lvl-"+id+"-"+(i+1));
+    if (btn) btn.classList.toggle("selected", i+1===val);
+  });
+  updateHeader();
+  if (document.getElementById("tab-overview").style.display !== "none") renderOverview();
+}
+
+function saveScores() {
+  const entry = { date: new Date().toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"}), scores:{...scores}, total:total() };
+  history = [entry, ...history].slice(0,12);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({scores, history}));
+  unsaved = false;
+  const btn = document.getElementById("save-btn");
+  btn.textContent = "✓ Saved"; btn.classList.add("saved");
+  document.getElementById("save-status").textContent = "Results saved";
+  setTimeout(() => { btn.textContent = "Save Results"; btn.classList.remove("saved"); }, 2200);
+}
+
+function promptReset() {
+  document.getElementById("confirm-bar").classList.add("visible");
+  document.getElementById("reset-btn").classList.add("confirming");
+}
+function cancelReset() {
+  document.getElementById("confirm-bar").classList.remove("visible");
+  document.getElementById("reset-btn").classList.remove("confirming");
+}
+function confirmReset() {
+  scores = { foundations:1, software:1, data:1, automation:1, ai:1, security:1 };
+  history = []; localStorage.removeItem(STORAGE_KEY); expanded = null; unsaved = false;
+  cancelReset(); renderDims(); updateHeader();
+  document.getElementById("save-status").textContent = "Reset — no saved data";
+}
+
+const TIER_DETAILS = {
+  "Novice": {
+    desc: "Technology is something that happens around you rather than something you actively use. You can get through the day, but you rely on others for anything beyond the most basic tasks — and repetitive, manual work has become invisible because it's always been that way. In a world where technology fluency is compounding, staying here has a cost that grows every year.",
+    signals: ["Needs help with non-routine digital tasks","Avoids software beyond familiar defaults","Has not meaningfully used AI tools","Security practices are minimal or inconsistent"],
+    next: "Pick one tool you use every day and spend 30 minutes exploring its advanced features. Not a course — just curiosity. That habit, repeated weekly, is the foundation of everything above this tier."
+  },
+  "Developing": {
+    desc: "You handle everyday digital tasks independently and are building awareness of what's possible beyond the basics. The gap is intentionality — you use technology reactively rather than proactively looking for ways to do things faster, better, or with less effort. You know tools exist; you haven't yet made a habit of reaching for them.",
+    signals: ["Comfortable with standard workplace tools","Aware of automation and AI but uses them minimally","Solves common tech problems independently","Security hygiene is present but inconsistent"],
+    next: "Identify the task you repeat most often in your work. Spend one hour trying to automate or significantly speed it up using tools already available to you. This single exercise builds the habit of tech-first problem solving."
+  },
+  "Capable": {
+    desc: "You are genuinely productive with technology. You use advanced features, save real time through automation, and can figure out new tools without hand-holding. The gap between you and the next level is depth and integration — you use tools well individually but haven't yet built the interconnected personal tech stack that multiplies output across everything you do.",
+    signals: ["Uses advanced features in core tools routinely","Has built at least one meaningful automation","Uses AI tools regularly for work tasks","Troubleshoots effectively and independently"],
+    next: "Connect two tools you use separately. Build an automation that passes information between them without manual copying. The compounding effect of connected tools is the unlock from Capable to Proficient."
+  },
+  "Proficient": {
+    desc: "Technology genuinely multiplies your output. You work faster, make better decisions with data, automate routine tasks, and use AI as a daily collaborator. You are ahead of most knowledge workers. The gap to Expert is breadth of impact — you optimize your own work extremely well, but you haven't yet turned that capability toward building things others use or shaping how your team or organization works.",
+    signals: ["Personal productivity is significantly above average","Uses AI tools with intentionality and sophistication","Can build automations connecting multiple platforms","Actively stays current on new tools and capabilities"],
+    next: "Build something for someone else. A template, a workflow, a tool, an automation. Teaching forces mastery, and creating for others requires the kind of robustness and documentation that separates proficient from expert."
+  },
+  "Expert": {
+    desc: "You are in a small group of people for whom technology is a genuine force multiplier — not just on your own output, but on the people around you. You evaluate new tools critically, build sophisticated systems, stay ahead of the curve on emerging capabilities, and actively raise the tech floor of your organization. This tier is not a destination; it requires active maintenance.",
+    signals: ["Regularly introduces new tools and capabilities to teammates","Builds AI-powered workflows, not just uses them","Advises others on security, tools, and digital strategy","Continuously learning and evaluating emerging technology"],
+    next: "The risk at this level is obsolescence through complacency. Dedicate time each quarter to exploring one emerging technology outside your current stack. Depth is an asset; breadth is what keeps it relevant."
+  }
+};
+
+const DIM_MEANINGS = {
+  foundations: [
+    { meaning: "Basic tasks like finding files, setting up accounts, or changing device settings require help or significant effort. Technology feels like an obstacle rather than a tool.", next: "Follow a 30-minute beginner guide for your operating system. Learn keyboard shortcuts for the five things you do most. Small wins here build confidence fast." },
+    { meaning: "You manage email, browse the web, and handle files without help. The gap is that you stay within familiar territory — anything outside your routine requires looking things up or asking someone.", next: "Spend one session exploring your device's settings from top to bottom. You'll discover features you didn't know existed and build the habit of investigating rather than accepting defaults." },
+    { meaning: "You're comfortable across the digital tools most people use at work. You can configure settings, troubleshoot common issues, and adapt to new platforms without friction.", next: "Set up a new tool or service entirely independently — from account creation to custom configuration. The goal is building confidence with unfamiliar environments, not just familiar ones." },
+    { meaning: "You move efficiently between devices and platforms. When something breaks, you diagnose and fix it. You customize your environment to match how you work rather than adapting to defaults.", next: "Teach someone else a digital foundations skill. The act of explaining forces you to solidify your knowledge and often reveals gaps you didn't know you had." },
+    { meaning: "Technology infrastructure — hardware, software, accounts, settings — is something you set up and manage effortlessly for yourself and others. You are the person others come to when something doesn't work.", next: "Stay current by following one technology publication or newsletter regularly. The foundations layer changes slower than others, but hardware generations, OS updates, and new device categories matter." }
+  ],
+  software: [
+    { meaning: "You use the minimum features needed to complete a task. You haven't explored what your tools can actually do, so every task takes longer than it needs to.", next: "Open your most-used application and watch one 'advanced features' tutorial for it. There is almost certainly a feature that would save you hours per week that you don't know exists." },
+    { meaning: "You follow instructions well and can complete most tasks given guidance. Independent exploration is limited — you use software as given rather than shaping it to how you work.", next: "Find the automation or macro feature in your most-used tool. Build one simple automation that removes at least one repetitive step from your daily workflow." },
+    { meaning: "You use powerful features — formulas, templates, integrations, conditional logic — that most users ignore. Your output per hour is noticeably higher than a basic user of the same tools.", next: "Connect two tools using a native integration or Zapier/Make. For example: when a form is submitted, create a document and send a notification. This is the step from tool user to tool architect." },
+    { meaning: "You've built a personal productivity system where tools work together. Repetitive work largely doesn't reach you — it's been automated, templated, or systematized. Others notice that you produce more with less visible effort.", next: "Document your personal tool stack. Share it with a colleague. The act of articulating it reveals what's missing, and teaching it is the path to Expert." },
+    { meaning: "You master new software faster than others and build systems — templates, workflows, integrations — that others rely on. Software is plastic in your hands: you bend it to your needs rather than the reverse.", next: "Evaluate your stack quarterly. Tools improve rapidly, and the best setup today may not be the best in 12 months. Stay intentional about what you use and why." }
+  ],
+  data: [
+    { meaning: "Data tasks feel uncomfortable. Spreadsheets beyond simple lists, charts, or anything involving numbers in bulk are avoided or delegated. Decisions are made on gut rather than evidence.", next: "Build a simple spreadsheet to track something you care about — time, money, tasks. Use one formula (SUM, AVERAGE, or COUNTIF). Getting comfortable with data starts with personally relevant data." },
+    { meaning: "You can read a well-made chart or table and extract the key message. You're a good consumer of data others have prepared, but you can't yet generate your own analysis from raw data.", next: "Take one report you regularly receive and try to recreate its key chart from the underlying data yourself. This bridges the gap from consumer to producer." },
+    { meaning: "You can build analysis from scratch. Pivot tables, VLOOKUP/INDEX MATCH, basic charts, and data cleaning are in your toolkit. You can answer a business question given a dataset.", next: "Learn SQL basics — enough to query a database directly. Even SELECT, WHERE, and GROUP BY will unlock data sources that currently require someone else to pull for you." },
+    { meaning: "Data analysis is a genuine work superpower. You pull data yourself, build dashboards, run analyses, and communicate findings clearly. You make decisions that others make on instinct.", next: "Learn one statistical concept that applies to your work — A/B testing, regression, or cohort analysis. Adding statistical rigour to your analytical instincts is the step to Expert." },
+    { meaning: "You design the data infrastructure others use to do analysis. Dashboards, pipelines, data models, and statistical methods are all in scope. You are the person who answers questions others don't yet know how to ask.", next: "Stay current on data tooling — dbt, modern BI platforms, Python data libraries. The data stack evolves fast, and expertise in tools that are becoming standard is a strong differentiator." }
+  ],
+  automation: [
+    { meaning: "Repetitive work is simply 'work' — it hasn't occurred to you that it could be eliminated. Every task is done manually, every time, without question.", next: "List five things you do manually more than once a week. That list is your automation backlog. Pick the simplest one and Google 'how to automate [task]'. The answer is usually three clicks away." },
+    { meaning: "You know automation tools exist and have used the simplest versions — out-of-office replies, recurring calendar events, email filters. You haven't applied the concept to real workflow problems yet.", next: "Sign up for Zapier or Make (both have free tiers) and complete their beginner tutorial. Building your first multi-step automation — even a toy one — fundamentally changes how you see repetitive work." },
+    { meaning: "You build working automations that save real time. You've connected tools, eliminated manual steps, and proved to yourself that automation is accessible without coding. The gap is complexity and reliability.", next: "Build an automation with conditional logic: 'if this, then that, otherwise this other thing'. Branching logic is the step that transforms basic automations into genuinely powerful ones." },
+    { meaning: "Automation is part of how you work, not a special project. Multi-tool workflows, scheduled processes, and triggered actions run in the background while you focus on higher-value work. You recover hours every week.", next: "Learn to use webhooks and basic API calls. This removes the dependency on pre-built connectors and lets you automate interactions with almost any modern software, not just those with Zapier integrations." },
+    { meaning: "You build automations that others use — robust, documented, with error handling and monitoring. You think in systems: triggers, conditions, actions, exceptions, and fallbacks. Automation is a design skill for you, not just a productivity hack.", next: "Explore low-code/no-code platforms like n8n or Pipedream for self-hosted automation, or learn basic Python scripting. These unlock automation possibilities that visual tools can't reach." }
+  ],
+  ai: [
+    { meaning: "AI tools haven't entered your workflow. You may have heard of ChatGPT or similar tools but haven't used them for real work tasks. You're missing the single biggest productivity shift in a generation.", next: "Spend 20 minutes using Claude or ChatGPT on a real work task — drafting an email, summarizing a document, or brainstorming ideas. Don't aim for perfect; aim for your first genuine AI-assisted output." },
+    { meaning: "You've tried AI tools and found them occasionally useful for simple tasks. The gap is intentionality — you reach for AI inconsistently and haven't developed a sense of where it reliably adds value versus where it falls short.", next: "Pick three recurring work tasks and commit to using AI for each one for a full week. Repeated use of AI on the same task type builds the pattern recognition that makes you effective with it." },
+    { meaning: "AI is a regular part of your workflow. You write prompts that get useful outputs, you know which tools are best for which tasks, and you've developed genuine intuition for what AI can and can't do reliably.", next: "Learn prompt engineering techniques: chain-of-thought prompting, role assignment, few-shot examples, and output formatting instructions. Better prompts unlock dramatically better results from the same models." },
+    { meaning: "AI multiplies your output across writing, research, analysis, coding, and creative work. You use multiple models intentionally, evaluate their outputs critically, and stay current on new capabilities as they emerge.", next: "Build an AI-powered workflow — not just a single prompt, but a sequence where AI outputs feed into other tools or processes. This is the step from AI user to AI architect." },
+    { meaning: "You operate at the frontier of what AI tools can do for a knowledge worker. You build systems, evaluate models critically, contribute to how your organization uses AI, and anticipate where the technology is heading before it becomes mainstream.", next: "Deepen technical understanding: learn about model fine-tuning, RAG (retrieval-augmented generation), and AI APIs. Even without an engineering background, understanding how these work makes you significantly more effective at deploying AI." }
+  ],
+  security: [
+    { meaning: "Security practices are minimal or absent. Passwords are reused, updates are ignored, and phishing emails are a real risk. You may not have experienced a serious incident yet — but the exposure is real and growing.", next: "Do two things today: install a password manager (Bitwarden is free) and enable two-factor authentication on your email account. These two steps eliminate the majority of common attack vectors." },
+    { meaning: "You understand the basics — don't click suspicious links, use reasonably strong passwords — but you apply security practices inconsistently and more through habit than conscious understanding.", next: "Audit your most important accounts: email, banking, work. Enable MFA on each. Use your password manager to generate unique passwords for all of them. This single session closes most of your exposure." },
+    { meaning: "Your personal security posture is solid. Password manager, MFA everywhere, phishing recognition, and awareness of common attack patterns. You protect yourself reliably and don't introduce unnecessary risk.", next: "Extend security hygiene to your digital footprint: review app permissions on your phone, audit which services have access to your Google/Microsoft account, and check Have I Been Pwned for leaked credentials." },
+    { meaning: "Security is a proactive habit, not a reactive response. You review access regularly, use a VPN on untrusted networks, apply the principle of least privilege to apps and services, and think about threat models, not just threats.", next: "Learn the basics of social engineering — how attackers manipulate people rather than systems. Understanding this makes you significantly harder to target and makes you a more effective security advocate for others." },
+    { meaning: "You are a security asset to your organization. You advise colleagues, respond thoughtfully to incidents, stay current on emerging threats, and apply security thinking to system and process design, not just personal behaviour.", next: "Consider a formal security qualification (CompTIA Security+, or even just the Google Cybersecurity Certificate). Formalizing your knowledge opens doors to contributing to organizational security strategy." }
+  ]
+};
+
+function renderOverview() {
+  const t = total(), tier = getTier(t);
+  const maxDim = DIMS.reduce((a,b) => scores[b.id] > scores[a.id] ? b : a);
+  const minDim = DIMS.reduce((a,b) => scores[b.id] < scores[a.id] ? b : a);
+  const td = TIER_DETAILS[tier.label] || {};
+
+  document.getElementById("ov-metrics").innerHTML = `
+    <div class="metric-card accent">
+      <div class="metric-label">Score</div>
+      <div class="metric-value">${t}<span style="font-size:16px;font-weight:400;color:rgba(210,246,252,0.4)">/30</span></div>
+    </div>
+    <div class="metric-card" style="background:var(--sky);border-color:var(--sky-deep)">
+      <div class="metric-label" style="color:var(--navy-light)">Tier</div>
+      <div class="metric-value" style="font-size:20px;padding-top:4px;color:var(--navy)">${tier.label}</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Strongest</div>
+      <div class="metric-value" style="font-size:15px;padding-top:4px;line-height:1.3">${maxDim.title}</div>
+      <div class="metric-sub" style="font-family:'DM Mono',monospace">${scores[maxDim.id]}/5</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Priority gap</div>
+      <div class="metric-value" style="font-size:15px;padding-top:4px;line-height:1.3">${minDim.title}</div>
+      <div class="metric-sub" style="font-family:'DM Mono',monospace">${scores[minDim.id]}/5</div>
+    </div>`;
+
+  document.getElementById("ov-tier-context").innerHTML = `
+    <div class="tier-context">
+      <div class="tier-context-header">
+        <span class="tier-context-badge" style="background:${tier.bg};color:${tier.color}">${tier.label}</span>
+        <span class="tier-context-title">What this tier means for you</span>
+      </div>
+      <div class="tier-context-desc">${td.desc||''}</div>
+      <div class="tier-context-signals">
+        ${(td.signals||[]).map(s=>`<div class="tier-signal"><div class="tier-signal-dot"></div><span>${s}</span></div>`).join('')}
+      </div>
+      ${td.next?`<div class="tier-next"><strong>What to do next:</strong> ${td.next}</div>`:''}
+    </div>`;
+
+  document.getElementById("ov-bars").innerHTML = DIMS.map(d =>
+    `<div class="radar-row">
+      <span class="radar-label">${d.title}</span>
+      <div class="radar-track"><div class="radar-fill" style="width:${(scores[d.id]/5)*100}%"></div></div>
+      <span class="radar-score">${scores[d.id]}/5</span>
+    </div>`).join('');
+
+  document.getElementById("ov-levels").innerHTML = DIMS.map(d => {
+    const s = scores[d.id], info = (DIM_MEANINGS[d.id]||[])[s-1]||{}, hasNext = s < 5 && info.next;
+    return `<li>
+      <div class="level-row-top">
+        <span class="levels-badge">${s}/5</span>
+        <div>
+          <div class="levels-name">${d.title}</div>
+          <div style="font-size:12px;color:var(--text-muted);font-style:italic">${d.levels[s-1]}</div>
+        </div>
+      </div>
+      <div class="level-meaning">${info.meaning||''}</div>
+      ${hasNext?`<div class="level-next-wrap"><span class="level-next-arrow">→</span><span><strong style="color:var(--navy);font-weight:600">To reach level ${s+1}:</strong> ${info.next}</span></div>`:(s===5?`<div class="level-next-wrap"><span class="level-next-arrow">✓</span><span><strong style="color:var(--navy);font-weight:600">Maximum level reached.</strong> Focus on sustaining and sharing this expertise.</span></div>`:'')}
+    </li>`;
+  }).join('');
+}
+
+function renderHistory() {
+  const c = document.getElementById("history-container");
+  if (!history.length) {
+    c.innerHTML = `<div class="empty-state"><div class="empty-icon">◎</div><div class="empty-title">No snapshots yet</div><div class="empty-sub">Save your results to start tracking progress over time.</div></div>`;
+    return;
+  }
+  c.innerHTML = history.map(entry => {
+    const tier = getTier(entry.total);
+    return `<div class="history-card">
+      <div class="history-top">
+        <div><div class="history-date">${entry.date}</div><div class="history-pts">${entry.total}/30 pts</div></div>
+        <div class="tier-pill" style="background:${tier.bg};color:${tier.color};border:1px solid ${tier.color}33">${tier.label}</div>
+      </div>
+      <div class="history-grid">
+        ${DIMS.map(d=>`<div class="history-dim"><span class="history-dim-name">${d.title}</span><span class="history-dim-score">${entry.scores?.[d.id]??'—'}/5</span></div>`).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function switchTab(name, btn) {
+  ["assess","overview","history"].forEach(t => {
+    document.getElementById("tab-"+t).style.display = t===name?"block":"none";
+  });
+  document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  if (name==="overview") renderOverview();
+  if (name==="history") renderHistory();
+}
+
+const TIER_TOOLTIPS = [
+  { name:"Novice",     range:"0 – 9 pts",   desc:"Technology is used minimally and reactively. Basic tasks are manageable but anything non-routine requires help. Repetitive manual work is the norm." },
+  { name:"Developing", range:"10 – 14 pts", desc:"Everyday digital tasks are handled independently. Awareness of what's possible is growing, but technology is used reactively rather than proactively." },
+  { name:"Capable",    range:"15 – 19 pts", desc:"Genuinely productive with technology. Advanced features, basic automation, and AI tools are in use. The gap is depth of integration across the full personal stack." },
+  { name:"Proficient", range:"20 – 24 pts", desc:"Technology multiplies personal output significantly. Data, automation, and AI work together as a system. Well ahead of most knowledge workers." },
+  { name:"Expert",     range:"25 – 30 pts", desc:"Technology fluency is a structural advantage — both personally and for those around you. Builds systems, stays at the frontier, and raises the floor for teammates." },
+];
+
+(function initTooltips() {
+  const labels = document.querySelectorAll('#tier-labels .tier-lbl');
+  const tooltip = document.getElementById('tier-tooltip');
+  const overlay = document.getElementById('tier-tooltip-overlay');
+  const ttName = document.getElementById('tt-name');
+  const ttRange = document.getElementById('tt-range');
+  const ttDesc = document.getElementById('tt-desc');
+
+  labels.forEach((lbl, i) => {
+    lbl.addEventListener('mouseenter', () => {
+      const d = TIER_TOOLTIPS[i];
+      ttName.textContent = d.name; ttRange.textContent = d.range; ttDesc.textContent = d.desc;
+      const oRect = overlay.parentElement.getBoundingClientRect();
+      const lRect = lbl.getBoundingClientRect();
+      const TW = 210;
+      let left = (lRect.left - oRect.left) + lRect.width / 2 - TW / 2;
+      left = Math.max(0, Math.min(left, oRect.width - TW));
+      const arrowLeft = (lRect.left - oRect.left) + lRect.width / 2 - left;
+      tooltip.style.left = left + 'px';
+      tooltip.setAttribute('data-arrow', Math.max(14, Math.min(arrowLeft, TW - 14)));
+      updateArrow();
+      tooltip.classList.add('visible');
+    });
+    lbl.addEventListener('mouseleave', () => tooltip.classList.remove('visible'));
+  });
+
+  function updateArrow() {
+    const pos = tooltip.getAttribute('data-arrow') || '50';
+    let st = document.getElementById('arrow-style');
+    if (!st) { st = document.createElement('style'); st.id = 'arrow-style'; document.head.appendChild(st); }
+    st.textContent = `.tier-tooltip::before { left: ${pos}px; }`;
+  }
+})();
+
+load();
+renderDims();
+updateHeader();
+</script>
+</body>
+</html>
