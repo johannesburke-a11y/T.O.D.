@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rise XLF Validator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d2e;
+    --surface2: #222640;
+    --border: #2d3154;
+    --pass: #4ade80;
+    --fail: #f87171;
+    --warn: #facc15;
+    --info: #60a5fa;
+    --muted: #64748b;
+    --text: #e2e8f0;
+    --text2: #94a3b8;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'Inter', sans-serif;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px 80px;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 48px;
+  }
+
+  .logo-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .logo-icon {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, #4ade80 0%, #22d3ee 100%);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+
+  h1 {
+    font-size: clamp(22px, 4vw, 32px);
+    font-weight: 600;
+    letter-spacing: -0.5px;
+    color: var(--text);
+  }
+
+  .subtitle {
+    color: var(--text2);
+    font-size: 15px;
+    max-width: 480px;
+    line-height: 1.6;
+    margin: 0 auto;
+  }
+
+  .pill {
+    display: inline-block;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--pass);
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    margin-bottom: 10px;
+    letter-spacing: 0.5px;
+  }
+
+  .validator {
+    width: 100%;
+    max-width: 760px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  /* DROP ZONE */
+  .drop-zone {
+    border: 2px dashed var(--border);
+    border-radius: 14px;
+    background: var(--surface);
+    padding: 52px 32px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .drop-zone::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, transparent 40%, rgba(74,222,128,0.03) 100%);
+    pointer-events: none;
+  }
+
+  .drop-zone.drag-over {
+    border-color: var(--pass);
+    background: #1a2d1f;
+  }
+
+  .drop-zone.has-file {
+    border-color: var(--info);
+    border-style: solid;
+  }
+
+  .scan-line {
+    display: none;
+    position: absolute;
+    top: -2px; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--pass), transparent);
+    animation: scan 1.4s ease-in-out infinite;
+  }
+
+  .drop-zone.scanning .scan-line { display: block; }
+
+  @keyframes scan {
+    0% { top: 0%; opacity: 1; }
+    90% { top: 100%; opacity: 1; }
+    100% { top: 100%; opacity: 0; }
+  }
+
+  .drop-icon {
+    font-size: 40px;
+    margin-bottom: 14px;
+    display: block;
+    transition: transform 0.2s;
+  }
+  .drop-zone:hover .drop-icon { transform: scale(1.1); }
+
+  .drop-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+
+  .drop-sub {
+    font-size: 13px;
+    color: var(--text2);
+    margin-bottom: 18px;
+  }
+
+  .btn-browse {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text2);
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 500;
+    padding: 8px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: border-color 0.2s, color 0.2s;
+  }
+  .btn-browse:hover { border-color: var(--text2); color: var(--text); }
+
+  #file-input { display: none; }
+
+  .file-loaded {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    justify-content: center;
+    font-size: 14px;
+  }
+  .file-loaded .fname {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--info);
+  }
+  .file-loaded .fsize { color: var(--muted); font-size: 12px; }
+  .clear-btn {
+    background: none; border: none; color: var(--muted);
+    cursor: pointer; font-size: 16px; padding: 2px 6px;
+    border-radius: 4px; transition: color 0.15s;
+  }
+  .clear-btn:hover { color: var(--fail); }
+
+  /* RUN BUTTON */
+  .btn-run {
+    width: 100%;
+    background: linear-gradient(135deg, #166534 0%, #14532d 100%);
+    border: 1px solid var(--pass);
+    color: var(--pass);
+    font-family: var(--sans);
+    font-size: 15px;
+    font-weight: 600;
+    padding: 14px;
+    border-radius: 10px;
+    cursor: pointer;
+    letter-spacing: 0.3px;
+    transition: opacity 0.2s, transform 0.1s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .btn-run:hover { opacity: 0.9; }
+  .btn-run:active { transform: scale(0.99); }
+  .btn-run:disabled {
+    background: var(--surface2);
+    border-color: var(--border);
+    color: var(--muted);
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+
+  /* RESULTS */
+  #results { display: none; flex-direction: column; gap: 12px; }
+
+  .result-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-radius: 10px;
+    border: 1px solid;
+  }
+
+  .result-header.pass {
+    background: #0d2218;
+    border-color: var(--pass);
+  }
+  .result-header.fail {
+    background: #2d1010;
+    border-color: var(--fail);
+  }
+  .result-header.warn {
+    background: #2a2008;
+    border-color: var(--warn);
+  }
+
+  .result-verdict {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .verdict-icon { font-size: 22px; }
+
+  .verdict-title {
+    font-size: 16px;
+    font-weight: 600;
+  }
+
+  .verdict-sub {
+    font-size: 13px;
+    color: var(--text2);
+    margin-top: 1px;
+  }
+
+  .verdict-badge {
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 20px;
+  }
+
+  .badge-pass { background: #052e16; color: var(--pass); border: 1px solid var(--pass); }
+  .badge-fail { background: #450a0a; color: var(--fail); border: 1px solid var(--fail); }
+  .badge-warn { background: #422006; color: var(--warn); border: 1px solid var(--warn); }
+
+  /* CHECK CARDS */
+  .checks-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  @media (max-width: 540px) { .checks-grid { grid-template-columns: 1fr; } }
+
+  .check-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 18px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .check-card.check-pass { border-left: 3px solid var(--pass); }
+  .check-card.check-fail { border-left: 3px solid var(--fail); }
+  .check-card.check-warn { border-left: 3px solid var(--warn); }
+  .check-card.check-info { border-left: 3px solid var(--info); }
+
+  .check-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+
+  .check-body {}
+  .check-name {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 3px;
+  }
+  .check-detail {
+    font-size: 12px;
+    color: var(--text2);
+    font-family: var(--mono);
+    line-height: 1.5;
+  }
+  .check-detail .highlight { color: var(--text); }
+  .check-detail .highlight-pass { color: var(--pass); }
+  .check-detail .highlight-fail { color: var(--fail); }
+  .check-detail .highlight-warn { color: var(--warn); }
+
+  /* ISSUES LIST */
+  .issues-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .issues-title {
+    padding: 12px 18px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: var(--text2);
+    border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+  }
+
+  .issues-list {
+    list-style: none;
+    max-height: 240px;
+    overflow-y: auto;
+  }
+
+  .issues-list::-webkit-scrollbar { width: 6px; }
+  .issues-list::-webkit-scrollbar-track { background: transparent; }
+  .issues-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  .issue-item {
+    display: flex;
+    gap: 12px;
+    padding: 10px 18px;
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+    align-items: flex-start;
+  }
+  .issue-item:last-child { border-bottom: none; }
+
+  .issue-sev {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 4px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .sev-error { background: #450a0a; color: var(--fail); }
+  .sev-warning { background: #422006; color: var(--warn); }
+
+  .issue-msg { color: var(--text2); line-height: 1.5; }
+  .issue-msg code {
+    font-family: var(--mono);
+    background: var(--surface2);
+    padding: 1px 5px;
+    border-radius: 3px;
+    color: var(--text);
+    font-size: 11px;
+  }
+
+  /* STATS BAR */
+  .stats-bar {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .stat-chip {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text2);
+  }
+  .stat-chip span { color: var(--text); font-weight: 600; }
+
+  /* FOOTER */
+  footer {
+    margin-top: 64px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  footer a { color: var(--text2); text-decoration: none; }
+  footer a:hover { color: var(--text); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="pill">XLIFF 1.2 · Articulate Rise 360</div>
+  <div class="logo-row">
+    <div class="logo-icon">⚡</div>
+    <h1>Rise XLF Validator</h1>
+  </div>
+  <p class="subtitle">Drop your translated <code style="font-family:var(--mono);font-size:13px;color:var(--info)">.xlf</code> file here to check it before importing into Articulate Rise — catch formatting errors before they cost you a failed import.</p>
+</header>
+
+<div class="validator">
+  <div class="drop-zone" id="drop-zone">
+    <div class="scan-line"></div>
+    <span class="drop-icon" id="drop-icon">📄</span>
+    <div id="drop-content">
+      <div class="drop-title">Drop your .xlf file here</div>
+      <div class="drop-sub">or browse to select it</div>
+      <button class="btn-browse" onclick="document.getElementById('file-input').click()">Choose file</button>
+    </div>
+    <input type="file" id="file-input" accept=".xlf,.xliff,text/xml,application/xml">
+  </div>
+
+  <button class="btn-run" id="btn-run" disabled onclick="runValidation()">
+    <span>▶</span> Validate File
+  </button>
+
+  <div id="results"></div>
+</div>
+
+<footer>
+  <p>Validates XLIFF 1.2 files exported from Articulate Rise 360 · Client-side only, your file never leaves your browser</p>
+</footer>
+
+<script>
+let fileContent = null;
+let fileName = '';
+
+const dropZone = document.getElementById('drop-zone');
+const fileInput = document.getElementById('file-input');
+const btnRun = document.getElementById('btn-run');
+const resultsEl = document.getElementById('results');
+
+// Drag & Drop
+dropZone.addEventListener('dragover', e => {
+  e.preventDefault();
+  dropZone.classList.add('drag-over');
+});
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file) loadFile(file);
+});
+dropZone.addEventListener('click', e => {
+  if (e.target === dropZone || e.target.id === 'drop-icon') {
+    fileInput.click();
+  }
+});
+fileInput.addEventListener('change', () => {
+  if (fileInput.files[0]) loadFile(fileInput.files[0]);
+});
+
+function loadFile(file) {
+  if (!file.name.match(/\.(xlf|xliff|xml)$/i)) {
+    alert('Please select a .xlf or .xliff file.');
+    return;
+  }
+  fileName = file.name;
+  const size = file.size < 1024 ? file.size + ' B'
+    : file.size < 1048576 ? (file.size / 1024).toFixed(1) + ' KB'
+    : (file.size / 1048576).toFixed(2) + ' MB';
+
+  const reader = new FileReader();
+  reader.onload = e => {
+    fileContent = e.target.result;
+    showFileLoaded(file.name, size);
+    dropZone.classList.add('has-file');
+    btnRun.disabled = false;
+    resultsEl.style.display = 'none';
+  };
+  reader.readAsText(file);
+}
+
+function showFileLoaded(name, size) {
+  document.getElementById('drop-icon').textContent = '📋';
+  document.getElementById('drop-content').innerHTML = `
+    <div class="file-loaded">
+      <span class="fname">${escHtml(name)}</span>
+      <span class="fsize">${size}</span>
+      <button class="clear-btn" onclick="clearFile(event)" title="Remove file">✕</button>
+    </div>
+    <div style="margin-top:8px;font-size:12px;color:var(--muted)">Click "Validate File" to run checks</div>
+  `;
+}
+
+function clearFile(e) {
+  e.stopPropagation();
+  fileContent = null;
+  fileName = '';
+  document.getElementById('drop-icon').textContent = '📄';
+  document.getElementById('drop-content').innerHTML = `
+    <div class="drop-title">Drop your .xlf file here</div>
+    <div class="drop-sub">or browse to select it</div>
+    <button class="btn-browse" onclick="document.getElementById('file-input').click()">Choose file</button>
+  `;
+  fileInput.value = '';
+  dropZone.classList.remove('has-file', 'scanning');
+  btnRun.disabled = true;
+  resultsEl.style.display = 'none';
+}
+
+// ── VALIDATION ENGINE ─────────────────────────────────────────────────────────
+
+function runValidation() {
+  if (!fileContent) return;
+
+  dropZone.classList.add('scanning');
+  btnRun.disabled = true;
+  btnRun.innerHTML = '<span>⏳</span> Validating…';
+  resultsEl.style.display = 'none';
+
+  setTimeout(() => {
+    const report = validate(fileContent);
+    dropZone.classList.remove('scanning');
+    btnRun.disabled = false;
+    btnRun.innerHTML = '<span>▶</span> Validate File';
+    renderResults(report);
+  }, 600);
+}
+
+function validate(content) {
+  const issues = [];
+  const checks = {};
+
+  // ── 1. XML WELL-FORMEDNESS ──
+  let xmlDoc = null;
+  try {
+    const parser = new DOMParser();
+    xmlDoc = parser.parseFromString(content, 'text/xml');
+    const parseErr = xmlDoc.querySelector('parsererror');
+    if (parseErr) {
+      const msg = parseErr.textContent.trim().split('\n')[0];
+      checks.xml = { status: 'fail', detail: msg };
+      issues.push({ sev: 'error', msg: 'XML parse error: <code>' + escHtml(msg.substring(0, 120)) + '</code>' });
+    } else {
+      checks.xml = { status: 'pass', detail: 'Well-formed XML' };
+    }
+  } catch (e) {
+    checks.xml = { status: 'fail', detail: e.message };
+    issues.push({ sev: 'error', msg: 'Could not parse XML: ' + escHtml(e.message) });
+  }
+
+  // ── 2. XLIFF STRUCTURE ──
+  if (xmlDoc && !xmlDoc.querySelector('parsererror')) {
+    const xliffEl = xmlDoc.querySelector('xliff');
+    if (!xliffEl) {
+      checks.structure = { status: 'fail', detail: 'No <xliff> root element found' };
+      issues.push({ sev: 'error', msg: 'Missing <code>&lt;xliff&gt;</code> root element — this may not be an XLIFF file.' });
+    } else {
+      const ver = xliffEl.getAttribute('version');
+      const files = xmlDoc.querySelectorAll('file');
+      const bodies = xmlDoc.querySelectorAll('body');
+      if (files.length === 0) {
+        checks.structure = { status: 'warn', detail: 'No <file> elements found' };
+        issues.push({ sev: 'warning', msg: 'No <code>&lt;file&gt;</code> elements found. Rise exports should contain at least one.' });
+      } else {
+        checks.structure = {
+          status: 'pass',
+          detail: `XLIFF ${ver || '?'} · ${files.length} file block${files.length !== 1 ? 's' : ''}`,
+          ver, fileCount: files.length
+        };
+      }
+    }
+  }
+
+  // ── 3. SOURCE / TARGET COUNT ──
+  const sourceMatches = (content.match(/<source[\s>]/g) || []).length;
+  const targetMatches = (content.match(/<target[\s>]/g) || []).length;
+  const missingTargets = sourceMatches - targetMatches;
+
+  if (missingTargets > 0) {
+    checks.coverage = {
+      status: 'fail',
+      detail: `${sourceMatches} sources, ${targetMatches} targets — ${missingTargets} missing`,
+      sources: sourceMatches, targets: targetMatches, missing: missingTargets
+    };
+    issues.push({ sev: 'error', msg: `<code>${missingTargets}</code> translation unit${missingTargets !== 1 ? 's are' : ' is'} missing a <code>&lt;target&gt;</code> element.` });
+  } else if (targetMatches > sourceMatches) {
+    checks.coverage = {
+      status: 'warn',
+      detail: `${sourceMatches} sources, ${targetMatches} targets — ${targetMatches - sourceMatches} extra`,
+      sources: sourceMatches, targets: targetMatches
+    };
+    issues.push({ sev: 'warning', msg: `More <code>&lt;target&gt;</code> elements (${targetMatches}) than <code>&lt;source&gt;</code> elements (${sourceMatches}). Rise may reject extra targets.` });
+  } else if (sourceMatches === 0) {
+    checks.coverage = { status: 'warn', detail: 'No <source> elements found', sources: 0, targets: 0 };
+    issues.push({ sev: 'warning', msg: 'No <code>&lt;source&gt;</code> elements found — is this a valid Rise export?' });
+  } else {
+    checks.coverage = {
+      status: 'pass',
+      detail: `${sourceMatches} sources = ${targetMatches} targets`,
+      sources: sourceMatches, targets: targetMatches, missing: 0
+    };
+  }
+
+  // ── 4. G-TAG INTEGRITY ──
+  if (xmlDoc && !xmlDoc.querySelector('parsererror')) {
+    const transUnits = xmlDoc.querySelectorAll('trans-unit');
+    let gTagErrors = 0;
+    let gTagSample = null;
+    let emptyTargets = 0;
+
+    transUnits.forEach(unit => {
+      const id = unit.getAttribute('id') || '?';
+      const source = unit.querySelector('source');
+      const target = unit.querySelector('target');
+
+      if (target) {
+        // Check for empty targets
+        if (target.textContent.trim() === '') emptyTargets++;
+
+        // Compare g-tag structure
+        if (source) {
+          const srcGs = source.querySelectorAll('g');
+          const tgtGs = target.querySelectorAll('g');
+
+          if (srcGs.length !== tgtGs.length) {
+            gTagErrors++;
+            if (!gTagSample) gTagSample = `unit id="${id}": source has ${srcGs.length} &lt;g&gt; tag(s), target has ${tgtGs.length}`;
+          } else {
+            // Check g-tag ids match
+            let idMismatch = false;
+            srcGs.forEach((g, i) => {
+              if (g.getAttribute('id') !== tgtGs[i]?.getAttribute('id')) idMismatch = true;
+            });
+            if (idMismatch) {
+              gTagErrors++;
+              if (!gTagSample) gTagSample = `unit id="${id}": &lt;g&gt; tag id attributes don't match source`;
+            }
+          }
+        }
+      }
+
+      if (emptyTargets > 0) {
+        issues.push({ sev: 'warning', msg: `<code>${emptyTargets}</code> target element${emptyTargets !== 1 ? 's are' : ' is'} empty (no translated text).` });
+      }
+    });
+
+    if (gTagErrors > 0) {
+      checks.gtags = {
+        status: 'fail',
+        detail: `${gTagErrors} unit${gTagErrors !== 1 ? 's' : ''} with mismatched <g> tags`,
+        sample: gTagSample
+      };
+      issues.push({ sev: 'error', msg: `<code>${gTagErrors}</code> translation unit${gTagErrors !== 1 ? 's have' : ' has'} mismatched <code>&lt;g&gt;</code> formatting tags. Rise will reject this.` });
+      if (gTagSample) issues.push({ sev: 'error', msg: 'First mismatch: <code>' + gTagSample + '</code>' });
+    } else {
+      const srcTotal = content.match(/<g /g)?.length || 0;
+      checks.gtags = {
+        status: 'pass',
+        detail: srcTotal > 0 ? `All <g> tag structures match` : 'No <g> tags (plain text sources)'
+      };
+    }
+  }
+
+  // ── 5. HTML ENTITIES ──
+  const rawAmp = content.match(/>[^<]*&[^;a-zA-Z#][^<]*/g);
+  const rawAngle = content.match(/target>[^<]*[<>][^<]*<\/target/g);
+  let entityIssues = 0;
+
+  if (rawAmp && rawAmp.length > 0) {
+    entityIssues += rawAmp.length;
+    issues.push({ sev: 'error', msg: `Unescaped <code>&amp;</code> characters detected in content. These must be written as <code>&amp;amp;</code>.` });
+  }
+
+  if (entityIssues === 0) {
+    checks.entities = { status: 'pass', detail: 'No unescaped HTML entities detected' };
+  } else {
+    checks.entities = { status: 'fail', detail: `${entityIssues} potential unescaped entity issue(s)` };
+  }
+
+  // ── 6. FILE MODIFIED AFTER EXPORT WARNING ──
+  // Check for trans-unit count mismatch between file elements (heuristic)
+  let fileBlockWarning = false;
+  if (xmlDoc && !xmlDoc.querySelector('parsererror')) {
+    const fileEls = xmlDoc.querySelectorAll('file');
+    fileEls.forEach(f => {
+      const units = f.querySelectorAll('trans-unit');
+      if (units.length === 0) {
+        fileBlockWarning = true;
+      }
+    });
+  }
+
+  if (fileBlockWarning) {
+    checks.fileblocks = { status: 'warn', detail: 'One or more <file> blocks have no trans-units' };
+    issues.push({ sev: 'warning', msg: 'One or more <code>&lt;file&gt;</code> blocks contain no <code>&lt;trans-unit&gt;</code> elements. The source course may have been modified after export.' });
+  } else if (checks.structure?.status === 'pass') {
+    checks.fileblocks = { status: 'pass', detail: 'All file blocks contain trans-units' };
+  }
+
+  // ── OVERALL STATUS ──
+  const hasErrors = issues.some(i => i.sev === 'error');
+  const hasWarnings = issues.some(i => i.sev === 'warning');
+  const overall = hasErrors ? 'fail' : hasWarnings ? 'warn' : 'pass';
+
+  return { checks, issues, overall, sourceCount: sourceMatches, targetCount: targetMatches };
+}
+
+// ── RENDER ─────────────────────────────────────────────────────────────────────
+
+function renderResults(report) {
+  const { checks, issues, overall, sourceCount, targetCount } = report;
+
+  const verdictMap = {
+    pass: { icon: '✅', title: 'Ready to import', sub: 'No errors found — this file should import into Rise successfully.', badge: 'PASS', cls: 'pass' },
+    warn: { icon: '⚠️', title: 'Import may have issues', sub: 'No critical errors, but warnings were found. Review before importing.', badge: 'WARNINGS', cls: 'warn' },
+    fail: { icon: '❌', title: 'Import will likely fail', sub: 'Critical errors detected. Fix these before importing into Rise.', badge: 'ERRORS', cls: 'fail' }
+  };
+  const v = verdictMap[overall];
+
+  const checkDefs = [
+    { key: 'xml',        label: 'XML Well-formedness' },
+    { key: 'structure',  label: 'XLIFF Structure' },
+    { key: 'coverage',   label: 'Source / Target Coverage' },
+    { key: 'gtags',      label: '<g> Tag Integrity' },
+    { key: 'entities',   label: 'HTML Entity Encoding' },
+    { key: 'fileblocks', label: 'File Block Completeness' },
+  ];
+
+  const statusIcon = { pass: '✓', fail: '✗', warn: '⚠' };
+  const statusClass = { pass: 'check-pass', fail: 'check-fail', warn: 'check-warn', info: 'check-info' };
+
+  let checksHtml = checkDefs.map(def => {
+    const c = checks[def.key];
+    if (!c) return '';
+    return `
+      <div class="check-card ${statusClass[c.status] || 'check-info'}">
+        <div class="check-icon">${c.status === 'pass' ? '✅' : c.status === 'fail' ? '❌' : '⚠️'}</div>
+        <div class="check-body">
+          <div class="check-name">${def.label}</div>
+          <div class="check-detail">${escHtml(c.detail || '')}</div>
+        </div>
+      </div>`;
+  }).join('');
+
+  let issuesHtml = '';
+  if (issues.length > 0) {
+    const items = issues.map(i => `
+      <li class="issue-item">
+        <span class="issue-sev ${i.sev === 'error' ? 'sev-error' : 'sev-warning'}">${i.sev.toUpperCase()}</span>
+        <span class="issue-msg">${i.msg}</span>
+      </li>`).join('');
+    issuesHtml = `
+      <div class="issues-section">
+        <div class="issues-title">Issues Found · ${issues.length}</div>
+        <ul class="issues-list">${items}</ul>
+      </div>`;
+  }
+
+  const statsHtml = `
+    <div class="stats-bar">
+      <div class="stat-chip">File: <span>${escHtml(fileName)}</span></div>
+      <div class="stat-chip">Sources: <span>${sourceCount}</span></div>
+      <div class="stat-chip">Targets: <span>${targetCount}</span></div>
+      <div class="stat-chip">Issues: <span>${issues.length}</span></div>
+    </div>`;
+
+  resultsEl.innerHTML = `
+    <div class="result-header ${v.cls}">
+      <div class="result-verdict">
+        <span class="verdict-icon">${v.icon}</span>
+        <div>
+          <div class="verdict-title">${v.title}</div>
+          <div class="verdict-sub">${v.sub}</div>
+        </div>
+      </div>
+      <span class="verdict-badge badge-${overall}">${v.badge}</span>
+    </div>
+    ${statsHtml}
+    <div class="checks-grid">${checksHtml}</div>
+    ${issuesHtml}
+  `;
+
+  resultsEl.style.display = 'flex';
+  resultsEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+</script>
+</body>
+</html>
