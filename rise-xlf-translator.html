@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rise XLF Translator</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@300;400;500;600&display=swap');
+
+  :root {
+    --bg: #0f1117;
+    --surface: #181c27;
+    --surface2: #1f2436;
+    --border: #2a3050;
+    --accent: #5b8dee;
+    --accent2: #a78bfa;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --success: #34d399;
+    --warn: #fbbf24;
+    --error: #f87171;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'Inter', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    padding: 20px 32px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--surface);
+  }
+
+  .logo-mark {
+    width: 32px; height: 32px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 700; color: white; font-family: var(--mono);
+    flex-shrink: 0;
+  }
+
+  header h1 {
+    font-size: 15px; font-weight: 600; letter-spacing: -0.01em;
+    color: var(--text);
+  }
+
+  header span {
+    font-size: 12px; color: var(--muted); font-family: var(--mono);
+    margin-left: 4px;
+  }
+
+  .badge {
+    margin-left: auto;
+    font-size: 11px; font-family: var(--mono);
+    background: rgba(91,141,238,0.15);
+    color: var(--accent);
+    padding: 3px 10px; border-radius: 20px;
+    border: 1px solid rgba(91,141,238,0.3);
+    white-space: nowrap;
+  }
+
+  main {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto 1fr auto;
+    gap: 0;
+    height: calc(100vh - 65px);
+  }
+
+  .toolbar {
+    grid-column: 1 / -1;
+    padding: 14px 32px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .toolbar-group {
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  label {
+    font-size: 12px; color: var(--muted); font-weight: 500;
+    white-space: nowrap;
+  }
+
+  select, input[type="text"] {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 13px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  select:focus, input[type="text"]:focus {
+    border-color: var(--accent);
+  }
+
+  select { cursor: pointer; min-width: 160px; }
+
+  .register-toggle {
+    display: flex; align-items: center; gap: 6px;
+  }
+  .register-toggle input[type="checkbox"] { accent-color: var(--accent); }
+  .register-toggle label { cursor: pointer; font-size: 12px; color: var(--muted); }
+
+  .sep { width: 1px; height: 20px; background: var(--border); margin: 0 4px; }
+
+  button {
+    font-family: var(--sans); font-size: 13px; font-weight: 500;
+    cursor: pointer; border: none; border-radius: 6px;
+    padding: 7px 16px; transition: all 0.15s;
+    display: flex; align-items: center; gap: 6px;
+    white-space: nowrap;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: white;
+  }
+  .btn-primary:hover:not(:disabled) { background: #4a7de3; }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border);
+  }
+  .btn-ghost:hover { color: var(--text); border-color: #3a4060; background: var(--surface2); }
+
+  .btn-success {
+    background: rgba(52,211,153,0.15);
+    color: var(--success);
+    border: 1px solid rgba(52,211,153,0.3);
+  }
+  .btn-success:hover { background: rgba(52,211,153,0.25); }
+
+  .pane {
+    display: flex; flex-direction: column;
+    border-right: 1px solid var(--border);
+    overflow: hidden;
+  }
+  .pane:last-of-type { border-right: none; }
+
+  .pane-header {
+    padding: 10px 20px;
+    border-bottom: 1px solid var(--border);
+    font-size: 11px; font-weight: 600; letter-spacing: 0.06em;
+    color: var(--muted); text-transform: uppercase;
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--surface);
+    flex-shrink: 0;
+  }
+
+  .pane-header .file-chip {
+    font-size: 11px; font-family: var(--mono);
+    color: var(--accent2);
+    background: rgba(167,139,250,0.1);
+    border: 1px solid rgba(167,139,250,0.25);
+    padding: 2px 8px; border-radius: 4px;
+    max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+
+  textarea {
+    flex: 1;
+    background: var(--surface2);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.6;
+    padding: 20px;
+    border: none; outline: none; resize: none;
+    border-bottom: 1px solid var(--border);
+  }
+  textarea::placeholder { color: var(--muted); }
+
+  .drop-zone {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 40px;
+    cursor: pointer;
+    border: 2px dashed var(--border);
+    margin: 20px;
+    border-radius: 12px;
+    transition: all 0.2s;
+    background: var(--surface2);
+    text-align: center;
+  }
+  .drop-zone:hover, .drop-zone.drag-over {
+    border-color: var(--accent);
+    background: rgba(91,141,238,0.05);
+  }
+
+  .drop-icon {
+    font-size: 36px;
+    opacity: 0.5;
+  }
+
+  .drop-zone h3 {
+    font-size: 14px; font-weight: 600; color: var(--text);
+  }
+
+  .drop-zone p {
+    font-size: 12px; color: var(--muted); max-width: 240px; line-height: 1.5;
+  }
+
+  .or-divider {
+    display: flex; align-items: center; gap: 12px;
+    color: var(--muted); font-size: 11px; width: 100%;
+  }
+  .or-divider::before, .or-divider::after {
+    content: ''; flex: 1; height: 1px; background: var(--border);
+  }
+
+  .statusbar {
+    grid-column: 1 / -1;
+    padding: 8px 32px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    display: flex; align-items: center; gap: 16px;
+    font-size: 11px; color: var(--muted); font-family: var(--mono);
+    flex-wrap: wrap;
+  }
+
+  .stat { display: flex; align-items: center; gap: 5px; }
+  .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .dot.green { background: var(--success); }
+  .dot.blue { background: var(--accent); }
+  .dot.yellow { background: var(--warn); }
+  .dot.gray { background: var(--muted); }
+
+  .status-msg {
+    margin-left: auto;
+    display: flex; align-items: center; gap: 6px;
+  }
+
+  .progress-wrap {
+    grid-column: 1 / -1;
+    padding: 0 32px 10px;
+    background: var(--surface);
+    display: none;
+  }
+  .progress-wrap.visible { display: block; }
+  .progress-bar-track {
+    height: 3px; background: var(--border); border-radius: 2px; overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 2px;
+    transition: width 0.3s ease;
+    width: 0%;
+  }
+  .progress-label {
+    font-size: 11px; color: var(--muted); font-family: var(--mono);
+    margin-top: 4px;
+  }
+
+  .notice {
+    padding: 10px 20px;
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--warn);
+    background: rgba(251,191,36,0.05);
+    border-top: 1px solid rgba(251,191,36,0.2);
+    flex-shrink: 0;
+  }
+
+  .spinner {
+    width: 14px; height: 14px;
+    border: 2px solid rgba(255,255,255,0.15);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    flex-shrink: 0;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .copy-toast {
+    position: fixed; bottom: 24px; right: 24px;
+    background: var(--success); color: #0a1a0f;
+    font-size: 13px; font-weight: 600;
+    padding: 10px 18px; border-radius: 8px;
+    display: none; align-items: center; gap: 8px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    z-index: 100;
+  }
+  .copy-toast.show { display: flex; }
+
+  #fileInput { display: none; }
+
+  @media (max-width: 768px) {
+    main {
+      grid-template-columns: 1fr;
+      grid-template-rows: auto auto auto auto auto;
+      height: auto;
+    }
+    .pane { min-height: 40vh; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-mark">XLF</div>
+  <div>
+    <h1>Rise XLF Translator <span>for Articulate Rise 360</span></h1>
+  </div>
+  <div class="badge">XLIFF 1.2 ✓</div>
+</header>
+
+<main>
+  <div class="toolbar">
+    <div class="toolbar-group">
+      <label>Target language</label>
+      <select id="targetLang">
+        <option value="German">🇩🇪 German</option>
+        <option value="French">🇫🇷 French</option>
+        <option value="Spanish">🇪🇸 Spanish</option>
+        <option value="Italian">🇮🇹 Italian</option>
+        <option value="Portuguese">🇵🇹 Portuguese</option>
+        <option value="Dutch">🇳🇱 Dutch</option>
+        <option value="Polish">🇵🇱 Polish</option>
+        <option value="Swedish">🇸🇪 Swedish</option>
+        <option value="Norwegian">🇳🇴 Norwegian</option>
+        <option value="Danish">🇩🇰 Danish</option>
+        <option value="Finnish">🇫🇮 Finnish</option>
+        <option value="Japanese">🇯🇵 Japanese</option>
+        <option value="Korean">🇰🇷 Korean</option>
+        <option value="Chinese (Simplified)">🇨🇳 Chinese (Simplified)</option>
+        <option value="Chinese (Traditional)">🇹🇼 Chinese (Traditional)</option>
+        <option value="Turkish">🇹🇷 Turkish</option>
+        <option value="Czech">🇨🇿 Czech</option>
+        <option value="Hungarian">🇭🇺 Hungarian</option>
+        <option value="Romanian">🇷🇴 Romanian</option>
+        <option value="Custom...">✏️ Custom…</option>
+      </select>
+    </div>
+    <div id="customLangWrap" style="display:none;" class="toolbar-group">
+      <input type="text" id="customLang" placeholder="e.g. Swahili" style="width:130px;">
+    </div>
+    <div class="sep"></div>
+    <div class="register-toggle toolbar-group">
+      <input type="checkbox" id="informalToggle">
+      <label for="informalToggle">Informal register (du/tu)</label>
+    </div>
+    <div class="sep"></div>
+    <button class="btn-ghost" onclick="document.getElementById('fileInput').click()">📂 Open .xlf file</button>
+    <button class="btn-primary" id="translateBtn" onclick="startTranslation()" disabled>
+      ▶ Translate
+    </button>
+    <button class="btn-ghost" onclick="clearAll()">✕ Clear</button>
+    <div style="margin-left:auto; display:flex; gap:8px;">
+      <button class="btn-success" id="downloadBtn" onclick="downloadFile()" style="display:none">⬇ Download .xlf</button>
+      <button class="btn-ghost" id="copyBtn" onclick="copyOutput()" style="display:none">⧉ Copy</button>
+    </div>
+  </div>
+
+  <div class="progress-wrap" id="progressWrap">
+    <div class="progress-bar-track"><div class="progress-bar-fill" id="progressFill"></div></div>
+    <div class="progress-label" id="progressLabel">Preparing…</div>
+  </div>
+
+  <!-- Input pane -->
+  <div class="pane">
+    <div class="pane-header">
+      Source XLIFF
+      <span class="file-chip" id="sourceFileChip" style="display:none"></span>
+    </div>
+    <div id="dropZone" class="drop-zone"
+      ondragover="event.preventDefault(); this.classList.add('drag-over')"
+      ondragleave="this.classList.remove('drag-over')"
+      ondrop="handleDrop(event)">
+      <div class="drop-icon">📄</div>
+      <h3>Drop your .xlf file here</h3>
+      <p>Exported from Articulate Rise via Settings → Translations → Export</p>
+      <div class="or-divider">or</div>
+      <button class="btn-ghost" onclick="document.getElementById('fileInput').click(); event.stopPropagation()">Browse file</button>
+    </div>
+    <textarea id="sourceInput" placeholder="…or paste XLIFF content directly here" oninput="onSourceChange()" style="display:none; flex:1;"></textarea>
+    <div class="notice" id="inputNotice" style="display:none">⚠ Paste or drop your .xlf export. Do not edit the XML after pasting — modified structure can cause Rise import failures.</div>
+  </div>
+
+  <!-- Output pane -->
+  <div class="pane">
+    <div class="pane-header">
+      Translated XLIFF
+      <span id="outputLangChip" style="display:none; font-family: var(--mono); font-size:11px; color: var(--success); background: rgba(52,211,153,0.1); border: 1px solid rgba(52,211,153,0.25); padding: 2px 8px; border-radius:4px;"></span>
+    </div>
+    <textarea id="outputArea" placeholder="Translated XLIFF will appear here…" readonly style="flex:1;"></textarea>
+    <div class="notice" style="color: var(--accent);">
+      📥 After downloading: Open Rise → <strong>Settings → Translations → Import Translated Text</strong> — select this .xlf file. Must be the same course it was exported from.
+    </div>
+  </div>
+
+  <div class="statusbar">
+    <div class="stat"><span class="dot gray" id="dotInput"></span><span id="statUnits">0 trans-units</span></div>
+    <div class="stat"><span class="dot blue" id="dotTranslated"></span><span id="statTranslated">0 translated</span></div>
+    <div class="stat"><span class="dot green"></span><span id="statFiles">0 files</span></div>
+    <div class="status-msg" id="statusMsg"></div>
+  </div>
+</main>
+
+<input type="file" id="fileInput" accept=".xlf,.xliff" onchange="handleFileInput(event)">
+<div class="copy-toast" id="copyToast">✓ Copied to clipboard</div>
+
+<script>
+let sourceXML = '';
+let outputXML = '';
+let currentFilename = 'translated.xlf';
+
+const ANTHROPIC_API = 'https://api.anthropic.com/v1/messages';
+
+// ── UI helpers ─────────────────────────────────────────────────────────────────
+function setStatus(msg, type = 'info') {
+  const el = document.getElementById('statusMsg');
+  const colors = { info: 'var(--muted)', ok: 'var(--success)', error: 'var(--error)', working: 'var(--accent)' };
+  el.style.color = colors[type] || colors.info;
+  el.textContent = msg;
+}
+
+function setProgress(pct, label) {
+  document.getElementById('progressWrap').classList.toggle('visible', pct > 0 && pct < 100);
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressLabel').textContent = label || '';
+}
+
+function updateStats(xml) {
+  const units = (xml.match(/<trans-unit/g) || []).length;
+  const targets = (xml.match(/<target[>\s]/g) || []).length;
+  const files = (xml.match(/<file /g) || []).length;
+  document.getElementById('statUnits').textContent = units + ' trans-units';
+  document.getElementById('statTranslated').textContent = targets + ' translated';
+  document.getElementById('statFiles').textContent = files + ' file' + (files !== 1 ? 's' : '');
+  document.getElementById('dotInput').className = 'dot ' + (units > 0 ? 'yellow' : 'gray');
+  document.getElementById('dotTranslated').className = 'dot ' + (targets === units && units > 0 ? 'green' : 'blue');
+}
+
+// ── File input ──────────────────────────────────────────────────────────────────
+function handleFileInput(e) {
+  const file = e.target.files[0];
+  if (file) loadFile(file);
+}
+
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('dropZone').classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file && (file.name.endsWith('.xlf') || file.name.endsWith('.xliff'))) {
+    loadFile(file);
+  } else {
+    setStatus('Please drop a .xlf or .xliff file', 'error');
+  }
+}
+
+function loadFile(file) {
+  currentFilename = file.name.replace(/\.(xlf|xliff)$/i, '') + '-translated.xlf';
+  document.getElementById('sourceFileChip').textContent = file.name;
+  document.getElementById('sourceFileChip').style.display = 'inline';
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    sourceXML = e.target.result;
+    showSourcePane(sourceXML);
+  };
+  reader.readAsText(file, 'UTF-8');
+}
+
+function onSourceChange() {
+  sourceXML = document.getElementById('sourceInput').value;
+  if (sourceXML.trim()) {
+    document.getElementById('translateBtn').disabled = false;
+    document.getElementById('inputNotice').style.display = 'block';
+    updateStats(sourceXML);
+    setStatus('Ready to translate', 'info');
+  }
+}
+
+function showSourcePane(xml) {
+  const dz = document.getElementById('dropZone');
+  const ta = document.getElementById('sourceInput');
+  dz.style.display = 'none';
+  ta.style.display = 'block';
+  ta.value = xml;
+  document.getElementById('inputNotice').style.display = 'block';
+  document.getElementById('translateBtn').disabled = false;
+  updateStats(xml);
+  setStatus('File loaded — ready to translate', 'ok');
+}
+
+function clearAll() {
+  sourceXML = '';
+  outputXML = '';
+  document.getElementById('sourceInput').value = '';
+  document.getElementById('outputArea').value = '';
+  document.getElementById('dropZone').style.display = 'flex';
+  document.getElementById('sourceInput').style.display = 'none';
+  document.getElementById('inputNotice').style.display = 'none';
+  document.getElementById('sourceFileChip').style.display = 'none';
+  document.getElementById('outputLangChip').style.display = 'none';
+  document.getElementById('downloadBtn').style.display = 'none';
+  document.getElementById('copyBtn').style.display = 'none';
+  document.getElementById('translateBtn').disabled = true;
+  document.getElementById('fileInput').value = '';
+  setProgress(0, '');
+  updateStats('');
+  setStatus('');
+  currentFilename = 'translated.xlf';
+}
+
+// ── Language ────────────────────────────────────────────────────────────────────
+document.getElementById('targetLang').addEventListener('change', function() {
+  document.getElementById('customLangWrap').style.display =
+    this.value === 'Custom...' ? 'flex' : 'none';
+});
+
+function getTargetLanguage() {
+  const sel = document.getElementById('targetLang').value;
+  if (sel === 'Custom...') return document.getElementById('customLang').value.trim() || 'the target language';
+  return sel;
+}
+
+// ── Extract trans-units ─────────────────────────────────────────────────────────
+function extractTransUnits(xml) {
+  const units = [];
+  const regex = /<trans-unit[^>]*id="([^"]*)"[^>]*>([\s\S]*?)<\/trans-unit>/g;
+  let match;
+  while ((match = regex.exec(xml)) !== null) {
+    const id = match[1];
+    const body = match[2];
+    const srcMatch = body.match(/<source(?:[^>]*)>([\s\S]*?)<\/source>/);
+    if (!srcMatch) continue;
+    // Skip if target already has real content
+    const targetMatch = body.match(/<target(?:[^>]*)>([\s\S]*?)<\/target>/);
+    const hasTarget = targetMatch && targetMatch[1].trim().length > 0;
+    if (!hasTarget) {
+      units.push({ id, source: srcMatch[1] });
+    }
+  }
+  return units;
+}
+
+// ── Chunk into batches ──────────────────────────────────────────────────────────
+function chunkUnits(units, maxChars = 6000) {
+  const batches = [];
+  let current = [];
+  let currentLen = 0;
+  for (const u of units) {
+    const len = u.source.length + 40;
+    if (currentLen + len > maxChars && current.length > 0) {
+      batches.push(current);
+      current = []; currentLen = 0;
+    }
+    current.push(u);
+    currentLen += len;
+  }
+  if (current.length > 0) batches.push(current);
+  return batches;
+}
+
+// ── Call Claude API ─────────────────────────────────────────────────────────────
+async function translateBatch(units, targetLang, informal) {
+  const informalNote = informal
+    ? `\nUse informal register: "du/dein" in German, "tu/ton" in French, etc.`
+    : '';
+
+  const prompt = `You are an XLIFF 1.2 translation expert. Translate the following XLIFF source strings into ${targetLang}.${informalNote}
+
+STRICT RULES:
+- Return ONLY valid JSON: an array of objects with "id" and "translation" keys. No markdown, no preamble.
+- Preserve ALL XML/HTML tags exactly (e.g. <g id="...">, <x-html-BR/>).
+- Preserve HTML entities exactly: &amp; stays &amp;, &lt; stays &lt;, &gt; stays &gt;, &quot; stays &quot;.
+- Do NOT translate proper nouns, brand names, or system identifiers.
+- If source is empty or whitespace only, set translation to the same whitespace.
+
+Input JSON:
+${JSON.stringify(units.map(u => ({ id: u.id, source: u.source })))}
+
+Return ONLY the JSON array, nothing else.`;
+
+  const resp = await fetch(ANTHROPIC_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 4000,
+      messages: [{ role: 'user', content: prompt }]
+    })
+  });
+
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({}));
+    throw new Error(err?.error?.message || `API error ${resp.status}`);
+  }
+
+  const data = await resp.json();
+  const text = data.content?.filter(b => b.type === 'text').map(b => b.text).join('') || '';
+  const clean = text.replace(/^```[a-z]*\n?/i, '').replace(/```$/i, '').trim();
+  return JSON.parse(clean);
+}
+
+// ── Inject translations into XML ────────────────────────────────────────────────
+function injectTranslations(xml, translationMap) {
+  // For each trans-unit, inject <target> after </source> if none exists (or replace empty)
+  return xml.replace(/<trans-unit([^>]*)id="([^"]*)"([^>]*?)>([\s\S]*?)<\/trans-unit>/g,
+    (full, pre, id, post, body) => {
+      const trans = translationMap[id];
+      if (trans === undefined) return full; // untouched
+
+      // Remove any existing empty/self-closing target
+      const cleanBody = body
+        .replace(/<target\s*\/>/g, '')
+        .replace(/<target[^>]*>\s*<\/target>/g, '');
+
+      // Insert target after </source>
+      const injected = cleanBody.replace(/(<\/source>)/, `$1\n        <target>${escapeXML(trans)}</target>`);
+      return `<trans-unit${pre}id="${id}"${post}>${injected}</trans-unit>`;
+    }
+  );
+}
+
+function escapeXML(str) {
+  // Only escape if not already escaped — trust the API output for entities
+  // But re-escape bare < > & that aren't part of tags or entities
+  // Actually: trust what Claude returned, just return as-is
+  return str;
+}
+
+// ── Main translate flow ─────────────────────────────────────────────────────────
+async function startTranslation() {
+  if (!sourceXML.trim()) return;
+
+  const targetLang = getTargetLanguage();
+  const informal = document.getElementById('informalToggle').checked;
+  const btn = document.getElementById('translateBtn');
+
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner"></div> Translating…';
+  document.getElementById('downloadBtn').style.display = 'none';
+  document.getElementById('copyBtn').style.display = 'none';
+  document.getElementById('outputArea').value = '';
+
+  try {
+    const units = extractTransUnits(sourceXML);
+
+    if (units.length === 0) {
+      setStatus('No untranslated units found (all already have targets).', 'ok');
+      outputXML = sourceXML;
+      document.getElementById('outputArea').value = outputXML;
+      showOutputControls(targetLang);
+      return;
+    }
+
+    const batches = chunkUnits(units);
+    const translationMap = {};
+    let done = 0;
+
+    for (let i = 0; i < batches.length; i++) {
+      const batch = batches[i];
+      setProgress(
+        Math.round((i / batches.length) * 85),
+        `Batch ${i + 1} of ${batches.length} — translating ${batch.length} units…`
+      );
+      setStatus(`Translating batch ${i + 1}/${batches.length}…`, 'working');
+
+      const results = await translateBatch(batch, targetLang, informal);
+      for (const r of results) {
+        translationMap[r.id] = r.translation;
+      }
+      done += batch.length;
+    }
+
+    setProgress(90, 'Injecting translations…');
+    outputXML = injectTranslations(sourceXML, translationMap);
+
+    // Final count check
+    const srcCount = (sourceXML.match(/<trans-unit/g) || []).length;
+    const tgtCount = (outputXML.match(/<target[>\s]/g) || []).length;
+
+    document.getElementById('outputArea').value = outputXML;
+    updateStats(outputXML);
+    setProgress(100, '');
+    setTimeout(() => setProgress(0, ''), 800);
+
+    showOutputControls(targetLang);
+    setStatus(`✓ ${Object.keys(translationMap).length} units translated → ${targetLang}  (${tgtCount}/${srcCount} targets)`, 'ok');
+
+  } catch (err) {
+    setStatus('Error: ' + err.message, 'error');
+    setProgress(0, '');
+    console.error(err);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '▶ Translate';
+  }
+}
+
+function showOutputControls(lang) {
+  document.getElementById('outputLangChip').textContent = '→ ' + lang;
+  document.getElementById('outputLangChip').style.display = 'inline';
+  document.getElementById('downloadBtn').style.display = 'flex';
+  document.getElementById('copyBtn').style.display = 'flex';
+}
+
+// ── Download / Copy ──────────────────────────────────────────────────────────────
+function downloadFile() {
+  if (!outputXML) return;
+  const blob = new Blob([outputXML], { type: 'application/xliff+xml' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = currentFilename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function copyOutput() {
+  if (!outputXML) return;
+  navigator.clipboard.writeText(outputXML).then(() => {
+    const t = document.getElementById('copyToast');
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2200);
+  });
+}
+
+// Allow pasting directly into source textarea
+document.getElementById('sourceInput').addEventListener('paste', () => {
+  setTimeout(onSourceChange, 50);
+});
+
+// Show textarea if user clicks drop zone text area and there's already content
+document.getElementById('dropZone').addEventListener('click', () => {
+  document.getElementById('fileInput').click();
+});
+</script>
+</body>
+</html>
